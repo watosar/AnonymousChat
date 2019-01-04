@@ -3,20 +3,6 @@ from discord import Embed
 ancher_pattern = re.compile('>>\d+')
 
 class AnoncMessage():
-	'''
-  count
-  author
-  channel #AnonChannel
-  ancher
-  
-  アンカーは後から設定する
-  サニタイズはどうするか。
-  メンションと分かりやすくする為に 出来るだけ残す？
-  事故防ぐかな。
-  役職メンションを他に回るのをサニタイズ後にする？
-  権限ない人間が役職持ちを取得できるかによる→閲覧可能
-  チャンネルメンションは通し
-  '''
   
   def __init__(self,message):
     self._content = message.content
