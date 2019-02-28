@@ -26,7 +26,8 @@ class AnoncMessageMaker:
     def __init__(self, client):
         self.client = client
         self.anchor_pat = re.compile('(?=(?<=^)|(?<= ))>>([0-9]+)(?= |$)')
-        self.mention_pat = re.compile('<@(&[0-9]+)>|@([0-9]+|[A-Za-z]{3,})')
+        self.mention_pat_role = re.compile('<@&([0-9]+)>')
+        self.mention_pat_anonc = re.compile('@(([0-9]+)|([A-Za-z]{3,}))')
 
     @staticmethod
     def message_to_anchor_dict(message) -> dict:
@@ -38,10 +39,28 @@ class AnoncMessageMaker:
             'timestamp': str(jst(message.created_at).data())
         }
 
-    def pickup_anonc_mentions(self, content) -> tuple:
+    async def pickup_anonc_mentions(self, content) -> tuple:
         """
-        (@({count}|{id}))|(<@?{id_role_id}>)
+        (@({count}|{id}))|(<@&{id_role_id}>)
         """
+        mentions = []
+        for i in self.mention_pat_role.findall(content):
+          anonc_id_role = self.client.anonc_guild.get_role(int(i))
+          if anonc_id_role:
+            mentions.append((f'<@&{i}>',anonc_id_role.name, anonc_id_role.member))
+        for i,*f in self.mention_pat_count.findall(content):
+          exist = False
+          if f[0] and int(f[0])<=self.client.count: # count
+            anonc_id = await self.client.get_message_numbered(int(f[0])).splitlines()[0][3:]
+          else: # id
+            anonc_id = f[1]
+          
+          if anonc_id:
+            anonc_id_role = self.client.anonc_guild.get_role_named(anonc_id)
+            if anonc_id_role:
+              mentions.append((f'@{i}',i,anonc_id_role.member))
+        
+        return mentions
 
     def pickup_anchors(self, content) -> tuple:
         """
@@ -68,6 +87,7 @@ class AnoncMessageMaker:
                 anchored_message = await self.client.get_numbered_message(num)
                 if not anchored_message:
                     # TODO : anchor error handler
+                    print(f'error: not found message at {num} ')
                     ...
                     continue
 
@@ -78,16 +98,18 @@ class AnoncMessageMaker:
 
         # mention
         mention_emoji = self.client.anonc_guild.get_emoji_named['at_sign']  # <:at_sign:0000000>
-        anonc_mentions = self.pickup_anonc_mentions(content)
+        anonc_mentions = await self.pickup_anonc_mentions(content)
         for i in anonc_mentions:
-            evaluated['content']['general'] = evaluated['content']['general'].replace(i, mention_emoji + i.name)
+            evaluated['content']['general'] = evaluated['content']['general'].replace(i[0], mention_emoji + i[1])
         for i in anonc_mentions:
-            evaluated['content'][i.menber.id] = evaluated['content']['general'].replace(mention_emoji + i.name,
-                                                                                        i.member.mention)
+            evaluated['content'][i[2].id] = evaluated['content']['general'].replace(mention_emoji + i[1],
+                                                                                        i[2].mention)
 
         return evaluated
 
     async def make(self, msg, count) -> AnoncMessage:
+        anonc_id = self.client.anonc_guild.get_id_from_channel(msg.channel)
+        msg.content = f'ID:{anonc_id}\n'
         evaled_content = await self.eval_content(msg.content, count)
         body = {
             'general':
@@ -108,4 +130,3 @@ class AnoncMessageMaker:
         for member_id, content in evaled_content['content'].items():
             body['ext'].setdefault(member_id, {}).update({'content': content})
         return AnoncMessage(body=body, count=count)
-
