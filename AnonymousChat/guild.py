@@ -1,198 +1,237 @@
 # -*- coding: utf-8 -*-
 
-import discord
-import asyncio
-from .utils import base36encode
+from discord import TextChannel, CategoryChannel, Guild, Permissions, PermissionOverwrite
 from .channel import AnoncChannel
+from .utils import base36encode, random_string
+from typing import Optional,List
+import re
 
 '''
-役職振り分け廃止 → 権限無くとも全役職およびそのメンバーを閲覧可能
-チャンネルトピックにroleid？
+while guild is single
+    can use role
 '''
 
+anonc_id_pat = re.compile('[a-zA-Z]{4}')
 
-class AnoncGuild:
-
-    def __init__(self, client, *, mount_general_system_channel=True, ex_system_channels_info=[{}]):
+class AnoncIntegrationGuild:
+    """
+    manage AnonChat member guilds | channels
+    """
+    
+    def __init__(self, client, channel_limit=500):
         self.client = client
-        self.loop = client.loop
-        self.servers = []
-        self.categories = []
-        self.channels = []
-        self.roles = []
-        self.mount_general_system_channel = mount_general_system_channel
-        self.system_channels_info = ex_system_channels_info
-        self._tmp = []
-        self.system_channels = []
-        self.present_id = False
-        self.arrow_handle_name = True
-
+        
+        self._anonc_system_guild_core = None
+        
+        self.channel_limit = channel_limit
+        self.anonc_chat_channels = []
+        self.anonc_system_channels = []
+        self.anonc_chat_id_roles = []
+    
     @property
-    def members(self):
-        return [i.member for i in self.chat_channels]
-
+    def anonc_system_guild(self):
+        return next((g for g in self.client.guilds if g==self._anonc_system_guild_core),None)
+    
+    @anonc_system_guild.setter
+    def anonc_system_guild(self, value):
+        self._anonc_system_guild_core = value
+        
     @property
-    def chat_channels(self):
-        return [i for i in self.channels if i not in self.system_channels]
-
-    def anonc_get_role(self, role_id):
-        for i in self.servers:
-            role = i.get_role(role_id)
-            if role:
-                return role
-        return None
-
-    def anonc_get_channel(self, member):
-        return next(
-            channel for channel in self.chat_channels
-            if channel.anonc_member == member
-        )
-
-    async def get_anonc_emojis(self, key):
-        pass
-
-    async def startup(self):
-        await self.setup()
-
-    async def setup(self):
-        for _channel in await self.client.get_all_channels():
-            if self.setup_system_channel(_channel):
-                pass
-            elif await self.is_anonc_channel(_channel):
-                channel = await self.cast_to_AnoncChannel(_channel)
-                self.channels.append(channel)
-                if channel.guild not in self.servers:
-                    self.servers.append(channel.guild)
-                if channel.category not in self.categories:
-                    self.categories.append(channel.category)
-        else:
-            pass
-
-        if not self.channels:
-            await self.register_new_server()
-
-        if len(self.sytem_channels_info) != len(self.system_channels):
-            for i in (i for i in self.system_channels_info if id(i) not in self._tmp):
-                server = await self.get_available_server()
-                channel = await server.create_text_channel(**i)
-                self.system_channels.append(channel)
-            del self._tmp, self.system_channels_info
-
-    def setup_system_channel(self, channel):
-        if not self.system_channels_info[0]:
-            return False
-
-        for channel_info in self.system_channels_info:
-            if self.mount_general_system_channel \
-                    and channel == channel.guild.system_channel \
-                    and channel.name == 'general':
-                self.system_channels.append(channel)
-                return True
-            elif all(getattr(channel, key) == value for key, value in channel_info.items()):
-                if id(channel_info) not in self._tmp:
-                    self._tmp.append(id(channel_info))
-                    setattr(self, f'{channel_info["name"]}_channel', channel)
-                    self.system_channels.append(channel)
+    def anonc_guilds(self) -> List[Guild]:
+      return [g for g in self.client.guilds if g != self.anonc_system_guild]
+  
+    async def setup(self, use_defo_sys_ch=False, anonc_sys_chs_info=[{}]) -> None:
+      
+        sys_chs_cache=[]
+        def _is_anonc_sys_ch(_ch) -> bool:
+            if use_defo_sys_ch:
+                if _ch == _ch.guild.system_channel:
                     return True
-                else:
-                    raise ValueError(f'not one channels matche to {channel_info}')
-        else:
+            for i in anonc_sys_chs_info:
+                if not i:
+                    return False
+                if all(getattr(_ch, k)==v for k, v in i.items()):
+                    sys_chs_cache.append(i)
+                    return True
             return False
-
-    async def is_anonc_channel(self, channel):
-        if await self.has_anonc_webhook(channel):
-            return True
-        else:
-            return False
-
-    async def has_anonc_webhook(self, channel):
-        for i in await channel.webhooks():
-            if i.user == self.client.user:
-                return True
-        else:
-            return False
-
-    async def cast_to_AnoncChannel(self, channel):
-        for webhook in await channel.webhooks():
-            if webhook.user == self.client.user:
-                break
-        else:
-            raise ValueError('failed to find webhook')
-
-        return AnoncChannel(channel, webhook)
-
-    async def register_new_anonc_server(self):  # fier client.on_guild_join
-        server = self.anonc_client.create_guild(f'AnonymousChatServer-{len(self.servers)+1}')
-        await server.default_role.edit(
-            mantionable=False,
-            permissions=discord.Permissions.none()
-        )
-        bot_owner = await server.create_role(
-            name='bot owner',
-            permissions=discord.Permissions.all()
-        )
-        for channel in server.channels:
-            if not (self.mount_general_system_channel) or not isinstance(channel, (discord.TextChannel,)):
-                await channel.delete()
-            else:
-                await channel.edit(
-                    bot_owner,
-                    read_messages=True,
-                    send_messages=True
-                )
-                self.system_channels.append(channel)
-        self.servers.append(server)
-        return server
-
-    async def register_new_anonc_member(self, member):
-        role = await self.register_new_anonc_role()
-        channel = await self.register_new_anonc_channel(member, role)
-        await self.client.on_anonc_channel_register(channel)
-        self.members.append(member)
-        return member
-
-    async def register_new_anonc_channel(self, member, role):
-        available_server = self.get_available_server()
-        if available_server is None:
-            available_server = await self.register_new_server()
-
-        available_category = max(
-            (cate for cate in self.categories
-             if cate.guild == available_server and len(cate.channels) < 50),
-            key=lambda cate: len(cate.channels),
-            default=None
-        )
-        txc_base_overwrites = {
-            available_server.default_role: discord.PermissionOverwrite(read_messages=False),
-            member: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_messages=True,
-                                                attach_files=True, read_message_history=True)
-        }
-
-        if available_category is None:
-            available_category = await available_server.create_category_channel(
-                name=f'category-{len(self.categories)+1}',
-                overwrites={available_server.default_role: discord.PermissionOverwrite(read_messages=False)}
+          
+        for g in self.anonc_guilds:
+            if g.owner != self.client.user:
+                await g.leave()
+                print(f'left {g}')
+            elif g.name==f'AnonChat[{base36encode(self.client.user.id)}]-0':
+                self.anonc_system_guild = g
+              
+        if not self.anonc_system_guild:
+            self.anonc_system_guild = await self._create_anonc_system_guild()
+      
+        guild_count = len(self.anonc_guilds)
+        if not guild_count:
+            await self._create_new_anonc_member_guild()
+        elif self.client.with_role and guild_count>1:
+            print('You cannot be with_role as True\nToggle flg to False')
+            self.client.with_role = False
+      
+        for ch in self.client.get_all_channels():
+            if not isinstance(ch,(TextChannel,)):
+                continue
+        
+            if _is_anonc_sys_ch(ch):
+                self.anonc_system_channels.append(ch)
+        
+            if not self.get_anonc_chat_channel_from_channel(ch):
+                anon_ch = await self.cast_to_anonc_chat_channel(ch)
+                if anon_ch:
+                    self.anonc_chat_channels.append(anon_ch)
+      
+        for left_sys_ch_info in (ch for ch in anonc_sys_chs_info if ch not in sys_chs_cache):
+            if not left_sys_ch_info:
+                return 
+            channel = await self.anonc_system_guild.create_text_channel(
+                name=left_sys_ch_info.pop('name', 'anonc_sys'),
+                **left_sys_ch_info
             )
-            self.categories.append(available_category)
-
-        channel = await available_server.create_text_channel(
-            name=member.name,
-            overwrites=txc_base_overwrites,
-            category=available_category
+            self.anonc_system_channels.append(channel)
+          
+        self._set_snonc_system_channels_to_attr()
+  
+    def _set_snonc_system_channels_to_attr(self):
+        for ch in self.anonc_system_channels:
+            name = f'anonc_system_{ch.name}_channel'
+            if ch.name=='general' or getattr(self, name, None):
+                continue
+            setattr(self, name, ch)
+            print(name)
+        
+    async def _create_anonc_system_guild(self) -> Guild:
+        guild = await self.client.create_guild(name=f'AnonChat[{base36encode(self.client.user.id)}]-0')
+        bot_owner = await guild.create_role(
+            name='bot owner',
+            permissions=Permissions.all()
         )
+        return guild
+        
+    async def _create_new_anonc_member_guild(self) -> Guild:
+        guild = await self.client.create_guild(name=f'AnonChat[{base36encode(self.client.user.id)}]-{len(self.anonc_guilds)+1}')
+        
+        await guild.default_role.edit(
+            mantionable=False,
+            permissions=Permissions.none()
+        )
+        bot_owner = await guild.create_role(
+            name='bot owner',
+            permissions=Permissions.all()
+        )
+        anonc_admin = await guild.create_role(
+            name='anonc admin',
+            permissions=Permissions.none()
+        )
+        anonc_system = await guild.create_role(
+            name='anonc system',
+            permissions=Permissions.none()
+        )
+        
+        for name,path in (('msg_anchor',self.client.anchor_emoji_path), ('at_sign',self.client.at_sign_emoji_path)):
+            with open(path, 'rb') as f:
+                await guild.create_custom_emoji(name=name,image=f.read(),roles=[anonc_system])
+        
+        for channel in guild.channels:
+            if isinstance(channel,(CategoryChannel,)):
+                continue
+            elif isinstance((channel,(TextChannel,))):
+                await channel.category.edit(name='anonc_system_channels')
+                await channel.category.set_permission(guild.default_role, read_messages=False)
+                await channel.category.set_permission(bot_owner, read_messages=True, send_messages=True)
+                await channel.category.set_permission(anonc_admin, read_messages=True, send_messages=True)
+            else:
+                await channel.category.delete()
+                await channel.dleete()
+        
+        return guild
+        
+    async def cast_to_anonc_chat_channel(self, channel) -> Optional[AnoncChannel]:
+        webhooks = await channel.webhooks()
+        for w in webhooks:
+            if w.user == self.client.user and w.name.isdigit() and anonc_id_pat.fullmatch(channel.topic):
+                anonc_id_role = None
+                if self.client.with_role:
+                    anonc_id_role = next((r for r in channel.guild.roles if r.name==channel.topic),None)# or await channel.guild.create_role(name=channel.topic)
+                    if not anonc_id_role:
+                        continue
+                return AnoncChannel(channel, w, anonc_id_role=anonc_id_role)
+    
+    def get_anonc_system_guild_emoji_named(self, name) -> Optional[AnoncChannel]:
+        return next((e for e in self.anonc_system_guild.emojis if e.name==name),None)
 
-        webhook = await channel.create_webhook(
-            name=f'{base36encode(member.id)}:{base36encode(role.id)}')
+    def get_anonc_chat_channel_from_channel(self, channel) -> Optional[AnoncChannel]:
+        return next((c for c in self.anonc_chat_channels if c.id==channel.id), None)
+            
+    def get_anonc_chat_channel_from_anonc_id_role_id(self, anonc_id_role_id) -> Optional[AnoncChannel]:
+        return next((ch for ch in self.anonc_chat_channels if ch.anonc_id_role and ch.anonc_id_role.id==anonc_id_role_id),None)
+    
+    def get_anonc_chat_channel_from_anonc_id(self, anonc_id):
+        return next((ch for ch in self.anonc_chat_channels if ch.anonc_id==anonc_id),None)
+        
+    def get_anonc_chat_channel_from_user(self, user):
+        return next((ch for ch in self.anonc_chat_channels if ch.anonc_member==user),None)
 
-        self.channels.append(AnoncChannel(channel, webhook, member, role))
-        return channel
-
-    async def reset_anonc_roles(self):
-        async def reset_anonc_role(channel):
-            role = channel.guild.get_role(channel.anonc_webhook.name.split(':')[1])
-            await role.delete()
-            self.roles.remove(role)
-            role = await self.register_new_anonc_role()
-            await channel.anonc_webhook.edit(name=f'{base36encode(channel.member.id)}:{base36encode(role.id)}')
-
-        await asyncio.wait([reset_anonc_role(channel) for channel in self.chat_channels])
+    async def register_member(self, member):
+        for g in sorted(self.anonc_guilds,key=lambda g: len(g.channels),reverse=True):
+            if len(g.channels)>=self.channel_limit:
+                continue
+            break
+        else:
+            g = await self._create_new_anonc_member_guild()
+        
+        anonc_ch = await self._create_anonc_chat_channel(g, member)
+        self.anonc_chat_channels.append(anonc_ch)
+        return anonc_ch
+    
+    
+    async def _create_anonc_chat_channel(self, guild, member) -> AnoncChannel:
+        overwrites = {
+            guild.default_role: PermissionOverwrite.from_pair(
+                    Permissions.none(), # allow
+                    Permissions.all() # deny
+                ),
+            member: PermissionOverwrite(
+                    send_messages = True,
+                    read_messages = True,
+                    manage_messages = True,
+                    attach_files = True,
+                    read_message_history = True
+                )
+        }
+        
+        anonc_id = random_string(4)
+        while self.get_anonc_chat_channel_from_anonc_id(anonc_id):
+            anonc_id = random_string(4)
+        
+        anonc_id_role = None
+        if self.client.with_role:
+            anonc_id_role = await guild.create_role(name=anonc_id, mentionable=True)
+        
+        channel = await guild.create_text_channel('anon chat', overwrites=overwrites, topic=anonc_id)
+        webhook = await channel.create_webhook(name=str(member.id))
+        
+        return AnoncChannel(channel, webhook, member, anonc_id_role)
+        
+    async def reset_all_anonc_id(self):
+        for ch in self.anonc_chat_channels:
+            new_anonc_id = random_string(4)
+            while self.get_anonc_chat_channel_from_anonc_id(anonc_id):
+                new_anonc_id = random_string(4)
+            
+            await ch.edit(topic=new_anonc_id)
+            if ch.anonc_id_role:
+                await ch.anonc_id_role.delete()
+                ch.anonc_id_role = await ch.guild.create_role(name=anonc_id, mentionable=True)
+    
+    async def delete_all_anonc_id_role(self):
+        pass
+    
+    async def unregister_member(self, member):
+        anonc_chat_channel = self.get_anonc_chat_channel_from_user(member)
+        self.anonc_chat_channels.remove(anonc_chat_channel)
+        await anonc_chat_channel.delete()
+        del anonc_chat_channel
