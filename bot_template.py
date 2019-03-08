@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import AnonChat
+import anonchat
 import discord
 import asyncio
 import logging
