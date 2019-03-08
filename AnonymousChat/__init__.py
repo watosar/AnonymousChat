@@ -1,3 +1,3 @@
-from . import client
+# -*- coding: utf-8 -*-
 
-Client = client.AnoncBaseClient
+from .client import AnoncBaseClient
