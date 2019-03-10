@@ -94,9 +94,13 @@ async def make_history_html_file():
 @client.event
 async def on_anonc_ready():
     await update_presence()
-    client.bot_owner = (await client.application_info()).owner
     await send_to_bot_owner('I’m ready')
-    print(client.guilds)
+    print('member guilds')
+    for g in client.guilds:
+        print(f'{g.name}:{len(g.members)}members')
+        if g == client.anonc_guild.anonc_system_guild and client.bot_owner not in g.members:
+            invite = (await g.invites)[0]
+            print('you should join here {invite}')
 
 
 @client.event
