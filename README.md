@@ -10,6 +10,6 @@ Discord上で5ch-likeな匿名チャットを動かすBot
 nekojyarasi#9236
 
 
-# Deploy on Heroku
+# Deploy to Heroku
 
 [![Heroku Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)

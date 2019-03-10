@@ -1,14 +1,14 @@
 {
-    "name": "Anonymous Chat"
-    "description": "Anonymous Chat on Discrd by python"
+    "name": "Anonymous Chat",
+    "description": "Anonymous Chat on Discrd by python",
     "keywords": [
         "python",
         "Discord",
         "Discord Bot"
     ]
-    "website": "https://github.com/watosar/AnonymousChat"
-    "repository": "https://github.com/watosar/AnonymousChat"
-    "logo": "https://github.com/watosar/AnonymousChat/blob/master/anonchat/template/at_sign.png"
+    "website": "https://github.com/watosar/AnonymousChat",
+    "repository": "https://github.com/watosar/AnonymousChat",
+    "logo": "https://github.com/watosar/AnonymousChat/blob/master/anonchat/template/at_sign.png",
     "env": {
         "token": "(YOUR_BOT_TOKEN)"
     }
