@@ -7,7 +7,8 @@ import logging
 import json
 from collections import namedtuple
 from textwrap import dedent
-import os 
+import os
+from io import BytesIO
 
 asyncio.set_event_loop(asyncio.new_event_loop())
 logging.basicConfig(level=logging.INFO)
@@ -20,23 +21,24 @@ WELCOME !!
 This is Anonymous Chat by nekojyarasi#9236
 '''
 
-MessageMimic = namedtuple('MessageMimic',('content','author','created_at'))
-UserMimick = namedtuple('UserMimic',('name',))
+MessageMimic = namedtuple('MessageMimic', ('content', 'author', 'created_at'))
+UserMimick = namedtuple('UserMimic', ('name', ))
 
 
 client = anonchat.AnoncBaseClient(
-    use_default_system_channel = True,
-    anonc_system_channels_info = [
+    use_default_system_channel=True,
+    anonc_system_channels_info=[
       {
-        'name': name, 
-        'topic':'for AnonyousChatBot' 
-      } for name in ['count','history','timer']
+        'name': name,
+        'topic': 'for AnonyousChatBot'
+      } for name in ['count', 'history', 'timer']
     ],
-    nsfw = True,
-    with_role = True,
-    show_chat_id = True,
-    default_name = '名無し'
+    nsfw=True,
+    with_role=True,
+    show_chat_id=True,
+    default_name='名無し'
 )
+
 
 async def update_presence():
     game = discord.Game(name=f'{len(client.anonc_guild.anonc_chat_channels)}人')
@@ -59,8 +61,6 @@ def message_to_html_style(message):
     &nbsp;&nbsp;&nbsp;{msg.content.replace(chr(10),'<br>&nbsp;&nbsp;&nbsp;')}
     </p>
     ''')
-    
-from io import BytesIO
 
 async def make_history_html_file():
     base = ''
@@ -68,13 +68,13 @@ async def make_history_html_file():
         base = f.read()
     channel = client.anonc_guild.anonc_system_history_channel
     messages = []
-    history_to = None 
+    history_to = None
     async for msg in channel.history(limit=1000):
         if not history_to:
             history_to = str(msg.created_at.date())
         messages.append(message_to_html_style(msg))
     else:
-         history_from = str(msg.created_at.date())
+        history_from = str(msg.created_at.date())
     f = discord.File(
         BytesIO(
             bytearray(
@@ -82,7 +82,7 @@ async def make_history_html_file():
                     history_from=history_from,
                     history_to=history_to,
                     messages=''.join(reversed(messages))
-                ).replace(':msg_anchor:','>>').replace(':at_sign:','@').replace('[','{').replace(']','}'),
+                ).replace(':msg_anchor:', '>>').replace(':at_sign:', '@').replace('[', '{').replace(']', '}'),
                 'utf-8'
             )
         ),
@@ -97,6 +97,7 @@ async def on_anonc_ready():
     client.bot_owner = (await client.application_info()).owner
     await send_to_bot_owner('I’m ready')
     print(client.guilds)
+
 
 @client.event
 async def init_anonc_count():
@@ -114,18 +115,19 @@ async def on_anonc_count_update(value):
   
 @client.event
 async def on_anonc_message(anonc_message):
-  #await run_public_command(message)
-  await client.anonc_guild.anonc_system_history_channel.send(anonc_message.to_dict())
+    # await run_public_command(message)
+    await client.anonc_guild.anonc_system_history_channel.send(anonc_message.to_dict())
   
   
 @client.event
 async def on_direct_message(message):
     if message.author == client.user:
-        return 
+        return
     await send_to_bot_owner(f'__message from {message.author}__\n{message.content}')
     if message.author == client.bot_owner and message.content == 'close':
         await client.logout()
         client.loop.close()
+  
   
 @client.event
 async def on_message_at_timer_channel(message):
@@ -137,7 +139,7 @@ async def on_message_at_timer_channel(message):
 @client.event
 async def on_message_at_general_channel(message):
     if message.author == client.user:
-        return 
+        return
     content = message.content
     print('general :', content)
     if content == 'change id present':
@@ -147,7 +149,8 @@ async def on_message_at_general_channel(message):
         await client.logout()
         client.loop.close()
     elif content == 'log':
-        await message.channel.send(file = await make_history_html_file())
+        await message.channel.send(file=await make_history_html_file())
+        
         
 @client.event
 async def on_anonc_member_guild_created(guild):
@@ -158,7 +161,7 @@ async def on_anonc_member_guild_created(guild):
     anonc_system_guild = client.anonc_guild.anonc_system_guild
     if anonc_system_guild:
         await anonc_system_guild.system_channel.send(f'registered new server : {invite.url}')
-    elif guild.name.split('-')[-1]=='0':
+    elif guild.name.split('-')[-1] == '0':
         await guild.system_channel.send(f'registered new server : {invite.url}')
         
         
@@ -173,10 +176,12 @@ async def on_anonc_member_join(anonc_chat_channel):
 async def on_anonc_member_removed(member):
     await update_presence()
   
+  
 def webhook_info_message_to_message_obj(message):
-    info_dict = json.loads(message.content.replace("'",'"'))
-    msg = MessageMimic(content=info_dict['content'],author=UserMimick(name=info_dict['username']),created_at=message.created_at)
+    info_dict = json.loads(message.content.replace("'", '"'))
+    msg = MessageMimic(content=info_dict['content'], author=UserMimick(name=info_dict['username']), created_at=message.created_at)
     return msg
+ 
  
 @client.event
 async def get_message_numbered(num):
@@ -185,7 +190,7 @@ async def get_message_numbered(num):
     async for message in channel.history(limit=loop_limit):
         pass
     msg = webhook_info_message_to_message_obj(message)
-    if int(msg.author.name.split(':')[0])==num:
+    if int(msg.author.name.split(':')[0]) == num:
         return msg
     else:
         raise ValueError(message.content)
