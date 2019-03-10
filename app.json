@@ -6,10 +6,19 @@
         "Discord",
         "Discord Bot"
     ],
+    "buildpacks": [
+        {
+            "url": "heroku/python"
+        }
+    ],
     "website": "https://github.com/watosar/AnonymousChat",
     "repository": "https://github.com/watosar/AnonymousChat",
     "logo": "https://github.com/watosar/AnonymousChat/blob/master/anonchat/template/at_sign.png",
     "env": {
-        "token": "(YOUR_BOT_TOKEN)"
+        "token": {
+            "description": "YOUR BOT TOKEN",
+            "required": true
+        }
     }
 }
+

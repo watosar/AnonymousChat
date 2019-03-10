@@ -12,4 +12,5 @@ nekojyarasi#9236
 
 # Deploy to Heroku
 
-[![Heroku Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
+[![Heroku Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/watosar/AnonymousChat)
+
