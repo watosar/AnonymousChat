@@ -175,7 +175,8 @@ class AnoncBaseClient(Client):
 
     @wait_until_anonc_ready
     async def on_member_remove(self, member) -> None:
-        if self.anonc_guild.get_anonc_chat_channel_from_user(member).guild != member.guild:
+        anonc_chat_channel = self.anonc_guild.get_anonc_chat_channel_from_user(member)
+        if anonc_chat_channel or anonc_chat_channel.guild != member.guild:
             print(f'{member} has no channel in {member.guild} removed')
             return
         await self.anonc_guild.unregister_member(member)
