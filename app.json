@@ -1,0 +1,10 @@
+{
+"name": "Anonymous Chat"
+"description": "Anonymous Chat on Discrd by python"
+"website": "https://github.com/watosar/AnonymousChat"
+"repository": "https://github.com/watosar/AnonymousChat"
+"logo": ""
+"env": {
+    "token": "(YOUR_BOT_TOKEN)"
+    }
+}

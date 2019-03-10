@@ -5,6 +5,7 @@ from discord import Client, Guild, DMChannel, Message, MessageType
 from .guild import AnoncIntegrationGuild
 from .message import AnoncMessageMaker
 import typing
+from pathlib import Path
 
 
 class AnoncCount:
@@ -27,17 +28,18 @@ class AnoncBaseClient(Client):
     anonc_count = AnoncCount()
     
     def __init__(
-      self, *args, anchor_emoji_path,at_sign_emoji_path,use_default_system_channel=False, anonc_system_channels_info =[{}], anchorable_limit=None, with_role=True, show_chat_id=True, **kwargs):
+      self, *args, anchor_emoji_path=None, at_sign_emoji_path=None, use_default_system_channel=False, anonc_system_channels_info =[{}], nsfw=False, anchorable_limit=None, with_role=True, show_chat_id=True, default_name='jhon doe', **kwargs):
         super().__init__(*args, **kwargs)
 
         # TODO : add this
         #   self.number_of_channel_stock = 0
         #   self.channel_stock = deque()
         
-        self.anchor_emoji_path = anchor_emoji_path
-        self.at_sign_emoji_path = at_sign_emoji_path
+        self.anchor_emoji_path = anchor_emoji_path or Path(__file__).parent/'template/msg_anchor.png'
+        self.at_sign_emoji_path = at_sign_emoji_path or Path(__file__).parent/'template/at_sign.png'
         
-        self.anonc_guild = AnoncIntegrationGuild(self, channel_limit=300)
+        
+        self.anonc_guild = AnoncIntegrationGuild(self, nsfw, channel_limit=300)
         
         # will delete after on_ready
         self.use_default_sys_ch = use_default_system_channel
@@ -46,13 +48,10 @@ class AnoncBaseClient(Client):
         self.with_role = with_role
         self.show_chat_id = show_chat_id
         
-        self.anonc_message_maker = AnoncMessageMaker(self)
+        self.anonc_message_maker = AnoncMessageMaker(self, default_name)
         self.anchorable_limit = anchorable_limit
         
         self.anonc_ready = asyncio.Event(loop=self.loop)
-        
-        # set in on_ready
-        self.bot_owner = None
 
     async def on_ready(self) -> None:
         # init AnonChat client
@@ -60,8 +59,8 @@ class AnoncBaseClient(Client):
         print('start on_ready tasks')
         print(f'logged on as {self.user}\nuser_id is {self.user.id}')
         self.bot_owner = (await self.application_info()).owner
-        if not self.bot_owner.dm_channel:
-            await self.bot_owner.create_dm()
+        '''if not self.bot_owner.dm_channel:
+            await self.bot_owner.create_dm()'''
         await self.anonc_guild.setup(self.use_default_sys_ch, self.anonc_sys_chs_info)
         # del self.anonc_sys_chs_info, self.anchor_emoji_path, self.at_sign_emoji_path
         '''
@@ -81,7 +80,7 @@ class AnoncBaseClient(Client):
         return 0
         
     async def on_anonc_count_update(value):
-        raise AttributeError('needs overwrite')
+        pass
 
     def wait_until_anonc_ready(function):
         async def decorated(self, *args, **kwargs):
@@ -92,7 +91,6 @@ class AnoncBaseClient(Client):
 
     async def on_anonc_ready(self) -> None:
         pass
-    
 
     @wait_until_anonc_ready
     async def on_message(self, message: Message) -> None:
@@ -146,8 +144,6 @@ class AnoncBaseClient(Client):
         coroutines = (anonc_channel.anonc_send(anonc_msg) for anonc_channel in self.anonc_guild.anonc_chat_channels)
         await asyncio.wait([self.loop.create_task(coro) for coro in coroutines])
 
-    
-
     @wait_until_anonc_ready
     async def on_member_join(self, member) -> None:
         print(f'{member} joined to {member.guild}')
@@ -163,7 +159,6 @@ class AnoncBaseClient(Client):
             if member != self.bot_owner:
                 await member.send('Sorry. You cannot join this AnonChat')
                 await member.kick()
-            
 
     async def _should_register_member(self, member) -> bool:
         if member.guild != self.anonc_guild.anonc_system_guild and not self.anonc_guild.get_anonc_chat_channel_from_user(member):
@@ -175,7 +170,6 @@ class AnoncBaseClient(Client):
         else:
             return False
         
-
     async def on_anonc_member_join(self, anonc_channel) -> None:
         pass
 
@@ -184,13 +178,12 @@ class AnoncBaseClient(Client):
         if self.anonc_guild.get_anonc_chat_channel_from_user(member).guild != member.guild:
             print(f'{member} has no channel in {member.guild} removed')
             return
-        await self.anonc_guild.remove_member(member)
+        await self.anonc_guild.unregister_member(member)
         await self.on_anonc_member_removed(member)
 
     async def on_anonc_member_removed(self, member) -> None:
         pass
         
-
     async def on_guild_join(self, guild: Guild) -> None:
         if guild.owner == guild.me:
             await self.on_anonc_member_guild_created(guild)
@@ -204,3 +197,4 @@ class AnoncBaseClient(Client):
 
     async def get_message_numbered(num: int) -> Message:
         raise AttributeError('needs overwrite')
+

@@ -11,15 +11,19 @@ while guild is single
     can use role
 '''
 
+
 anonc_id_pat = re.compile('[a-zA-Z]{4}')
+
 
 class AnoncIntegrationGuild:
     """
     manage AnonChat member guilds | channels
     """
     
-    def __init__(self, client, channel_limit=500):
+    def __init__(self, client, nsfw, channel_limit=500):
         self.client = client
+        
+        self.nsfw = nsfw
         
         self._anonc_system_guild_core = None
         
@@ -33,8 +37,8 @@ class AnoncIntegrationGuild:
         return next((g for g in self.client.guilds if g==self._anonc_system_guild_core),None)
     
     @anonc_system_guild.setter
-    def anonc_system_guild(self, value):
-        self._anonc_system_guild_core = value
+    def anonc_system_guild(self, guild):
+        self._anonc_system_guild_core = guild
         
     @property
     def anonc_guilds(self) -> List[Guild]:
@@ -187,7 +191,6 @@ class AnoncIntegrationGuild:
         self.anonc_chat_channels.append(anonc_ch)
         return anonc_ch
     
-    
     async def _create_anonc_chat_channel(self, guild, member) -> AnoncChannel:
         overwrites = {
             guild.default_role: PermissionOverwrite.from_pair(
@@ -211,7 +214,7 @@ class AnoncIntegrationGuild:
         if self.client.with_role:
             anonc_id_role = await guild.create_role(name=anonc_id, mentionable=True)
         
-        channel = await guild.create_text_channel('anon chat', overwrites=overwrites, topic=anonc_id)
+        channel = await guild.create_text_channel('anon chat', overwrites=overwrites, topic=anonc_id, nsfw=self.nsfw)
         webhook = await channel.create_webhook(name=str(member.id))
         
         return AnoncChannel(channel, webhook, member, anonc_id_role)
@@ -219,13 +222,13 @@ class AnoncIntegrationGuild:
     async def reset_all_anonc_id(self):
         for ch in self.anonc_chat_channels:
             new_anonc_id = random_string(4)
-            while self.get_anonc_chat_channel_from_anonc_id(anonc_id):
+            while self.get_anonc_chat_channel_from_anonc_id(new_anonc_id):
                 new_anonc_id = random_string(4)
             
             await ch.edit(topic=new_anonc_id)
             if ch.anonc_id_role:
                 await ch.anonc_id_role.delete()
-                ch.anonc_id_role = await ch.guild.create_role(name=anonc_id, mentionable=True)
+                ch.anonc_id_role = await ch.guild.create_role(name=new_anonc_id, mentionable=True)
     
     async def delete_all_anonc_id_role(self):
         pass
@@ -235,3 +238,4 @@ class AnoncIntegrationGuild:
         self.anonc_chat_channels.remove(anonc_chat_channel)
         await anonc_chat_channel.delete()
         del anonc_chat_channel
+

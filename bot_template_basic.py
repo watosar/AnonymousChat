@@ -6,11 +6,13 @@ import asyncio
 import logging
 import json
 from collections import namedtuple
+from textwrap import dedent
+import os 
 
 asyncio.set_event_loop(asyncio.new_event_loop())
 logging.basicConfig(level=logging.INFO)
 
-token = 'token'
+token = os.environ['token']
 
 welcome_message = '''
 {member.mention}
@@ -22,9 +24,7 @@ MessageMimic = namedtuple('MessageMimic',('content','author','created_at'))
 UserMimick = namedtuple('UserMimic',('name',))
 
 
-client = AnonChat.AnoncBaseClient(
-    anchor_emoji_path='./data/msg_anchor.png',
-    at_sign_emoji_path='./data/at_sign.png',
+client = anonchat.AnoncBaseClient(
     use_default_system_channel = True,
     anonc_system_channels_info = [
       {
@@ -32,13 +32,16 @@ client = AnonChat.AnoncBaseClient(
         'topic':'for AnonyousChatBot' 
       } for name in ['count','history','timer']
     ],
-    with_role=True,
-    show_chat_id=True
+    nsfw = True,
+    with_role = True,
+    show_chat_id = True,
+    default_name = '名無し'
 )
 
 async def update_presence():
     game = discord.Game(name=f'{len(client.anonc_guild.anonc_chat_channels)}人')
     await client.change_presence(activity=game)
+    
     
 async def send_to_bot_owner(content):
     print(content)
@@ -47,9 +50,52 @@ async def send_to_bot_owner(content):
     except discord.errors.Forbidden as e:
         print('Exception', e)
 
+
+def message_to_html_style(message):
+    msg = webhook_info_message_to_message_obj(message)
+    return dedent(f'''\
+    <p>
+    {msg.author.name}&nbsp;&nbsp;<font color="#acadaf">{str(msg.created_at).split('.')[0]}</font><br>
+    &nbsp;&nbsp;&nbsp;{msg.content.replace(chr(10),'<br>&nbsp;&nbsp;&nbsp;')}
+    </p>
+    ''')
+    
+from io import BytesIO
+
+async def make_history_html_file():
+    base = ''
+    with open('./data/logfile-template.html.txt', encoding='utf-8') as f:
+        base = f.read()
+    channel = client.anonc_guild.anonc_system_history_channel
+    messages = []
+    history_to = None 
+    async for msg in channel.history(limit=1000):
+        print('collecting')
+        if not history_to:
+            history_to = str(msg.created_at.date())
+        messages.append(message_to_html_style(msg))
+    else:
+         history_from = str(msg.created_at.date())
+    f = discord.File(
+        BytesIO(
+            bytearray(
+                base.format(
+                    history_from=history_from,
+                    history_to=history_to,
+                    messages=''.join(reversed(messages))
+                ).replace(':msg_anchor:','>>').replace(':at_sign:','@').replace('[','{').replace(']','}'),
+                'utf-8'
+            )
+        ),
+        filename='logfile.html'
+    )
+    return f
+     
+
 @client.event
 async def on_anonc_ready():
     await update_presence()
+    client.bot_owner = (await client.application_info()).owner
     await send_to_bot_owner('I’m ready')
     print(client.guilds)
 
@@ -101,6 +147,8 @@ async def on_message_at_general_channel(message):
     elif content == 'close':
         await client.logout()
         client.loop.close()
+    elif content == 'log':
+        await message.channel.send(file = await make_history_html_file())
         
 @client.event
 async def on_anonc_member_guild_created(guild):
@@ -145,3 +193,4 @@ async def get_message_numbered(num):
     
     
 client.run(token)
+

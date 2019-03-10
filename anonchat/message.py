@@ -21,6 +21,10 @@ class AnoncMessage:
             anchor_emoji = str(next(i for i in anonc_channel.guild.emojis if i.name == 'msg_anchor'))
             at_sign_emoji = str(next(i for i in anonc_channel.guild.emojis if i.name == 'at_sign'))
             adapted['content'] = adapted['content'].replace(':msg_anchor:', anchor_emoji).replace(':at_sign:', at_sign_emoji)
+            for embed in adapted['embeds']:
+                if 'description' not in embed:
+                    continue
+                embed['description'] = embed['description'].replace(':msg_anchor:', anchor_emoji).replace(':at_sign:', at_sign_emoji)
         adapted.update(ext)
         
         adapted['content'] = f'ID:{adapted.pop("anonc_id")}\n{adapted["content"]}'
@@ -74,12 +78,16 @@ class AnoncMessageMaker:
 
     @staticmethod
     def message_to_anchor_dict(message) -> dict:
+        print(message.created_at.isoformat())
         return {
             'author': {
                 'name': message.author.name,
             },
             'description': message.content,
-            'timestamp': str(jst(message.created_at).date())
+            'timestamp': message.created_at.isoformat(),
+            'footer': {
+                'text': 'created at'
+            }
         }
         
     @staticmethod
@@ -153,7 +161,7 @@ class AnoncMessageMaker:
         # anchor
         anchors = self.pickup_anchors(content)
         for num in anchors:
-            if num > count:
+            if num >= count:
                 # TODO : future anchor
                 ...
             else:
@@ -178,3 +186,4 @@ class AnoncMessageMaker:
                                                                                         i[2].mention)
 
         return evaluated
+
