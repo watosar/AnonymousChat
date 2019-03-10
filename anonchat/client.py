@@ -4,9 +4,10 @@ import asyncio
 from discord import Client, Guild, DMChannel, Message, MessageType
 from .guild import AnoncIntegrationGuild
 from .message import AnoncMessageMaker
+from .utils import get_discord_message_mimicked
 import typing
 from pathlib import Path
-
+from collections import namedtuple
 
 class AnoncCount:
     """
@@ -197,5 +198,5 @@ class AnoncBaseClient(Client):
         await self.bot_owner.send(f'registered new server : {invite.url}')
 
     async def get_message_numbered(num: int) -> Message:
-        raise AttributeError('needs overwrite')
+        return get_discord_message_mimicked()
 

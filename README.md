@@ -4,13 +4,16 @@
 
 Discord上で5ch-likeな匿名チャットを動かすBot
 
-
-## Author
-
-nekojyarasi#9236
+## Requirement
+discord.py rewrite
 
 
-# Deploy to Heroku
+## Deploy to Heroku
 
 [![Heroku Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/watosar/AnonymousChat)
 
+
+## Author
+
+Discord: nekojyarasi#9236
+Twitter: [@d7iy_l](https://twitter.com/d7iy_l)

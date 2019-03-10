@@ -21,9 +21,6 @@ WELCOME !!
 This is Anonymous Chat by nekojyarasi#9236
 '''
 
-MessageMimic = namedtuple('MessageMimic', ('content', 'author', 'created_at'))
-UserMimick = namedtuple('UserMimic', ('name', ))
-
 
 client = anonchat.AnoncBaseClient(
     use_default_system_channel=True,
@@ -174,7 +171,7 @@ async def on_anonc_member_join(anonc_chat_channel):
     message = await anonc_chat_channel.send(welcome_message.format(member=anonc_chat_channel.anonc_member))
     await message.pin()
     await update_presence()
-    
+    client.loop.create_task(anonc_chat_channel.send(file=make_history_html_file()))
 
 @client.event
 async def on_anonc_member_removed(member):
@@ -183,7 +180,7 @@ async def on_anonc_member_removed(member):
   
 def webhook_info_message_to_message_obj(message):
     info_dict = json.loads(message.content.replace("'", '"'))
-    msg = MessageMimic(content=info_dict['content'], author=UserMimick(name=info_dict['username']), created_at=message.created_at)
+    msg = anonchat.utils.get_discord_message_mimicked(content=info_dict['content'], author_name=info_dict['username'], created_at=message.created_at)
     return msg
  
  
