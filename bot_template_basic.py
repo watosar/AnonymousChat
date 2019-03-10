@@ -99,8 +99,8 @@ async def on_anonc_ready():
     for g in client.guilds:
         print(f'{g.name}:{len(g.members)}members')
         if g == client.anonc_guild.anonc_system_guild and client.bot_owner not in g.members:
-            invite = (await g.invites)[0]
-            print('you should join here {invite}')
+            invite = (await g.invites())[0]
+            print(f'you should join here {invite}')
 
 
 @client.event
