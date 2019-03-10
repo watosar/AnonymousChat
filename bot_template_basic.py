@@ -70,7 +70,6 @@ async def make_history_html_file():
     messages = []
     history_to = None 
     async for msg in channel.history(limit=1000):
-        print('collecting')
         if not history_to:
             history_to = str(msg.created_at.date())
         messages.append(message_to_html_style(msg))
