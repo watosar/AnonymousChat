@@ -54,7 +54,7 @@ class AnoncMessageMaker:
         body = {
             'general':
                 {
-                    'username': self.default_name,
+                    'username': msg.author.nick or self.default_name,
                     'content': evaled_content['content'].pop('general'),
                     'embeds': [i.to_dict() for i in msg.embeds] + self.get_attachment_embed_list(msg) + evaled_content['anchors'],
                     'anonc_id': anonc_id if self.client.show_chat_id else '????'
@@ -63,7 +63,6 @@ class AnoncMessageMaker:
                 {
                     msg.author.id:
                         {
-                            'username': msg.author.nick or self.default_name,
                             'avatar_url': msg.author.avatar_url,
                             'anonc_id': 'YOU'
                         }
