@@ -19,7 +19,7 @@ welcome_message = '''
 {member.mention}
 WELCOME !!
 This is Anonymous Chat by nekojyarasi#9236
-this bot is https://github.com/watosar/AnonymousChat
+This bot is https://github.com/watosar/AnonymousChat
 '''
 
 MessageMimic = namedtuple('MessageMimic', ('content', 'author', 'created_at'))
@@ -39,11 +39,6 @@ client = anonchat.AnoncBaseClient(
     show_chat_id=True,
     default_name='名無し'
 )
-
-
-# debug
-client._is_message_for_chat = lambda msg: False
-client.on_member_join = client.on_member_remove = None
 
 
 async def update_presence():
