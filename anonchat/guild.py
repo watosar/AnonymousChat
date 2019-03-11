@@ -71,7 +71,7 @@ class AnoncIntegrationGuild:
       
         guild_count = len(self.anonc_guilds)
         if not guild_count:
-            await self._create_new_anonc_member_guild()
+            await self._create_anonc_member_guild()
         elif self.client.with_role and guild_count>1:
             print('You cannot be with_role as True\nToggle flg to False')
             self.client.with_role = False
@@ -115,7 +115,7 @@ class AnoncIntegrationGuild:
         )
         return guild
         
-    async def _create_new_anonc_member_guild(self) -> Guild:
+    async def _create_anonc_member_guild(self) -> Guild:
         guild = await self.client.create_guild(name=f'AnonChat[{base36encode(self.client.user.id)}]-{len(self.anonc_guilds)+1}')
         
         await guild.default_role.edit(
@@ -138,18 +138,19 @@ class AnoncIntegrationGuild:
         for name,path in (('msg_anchor',self.client.anchor_emoji_path), ('at_sign',self.client.at_sign_emoji_path)):
             with open(path, 'rb') as f:
                 await guild.create_custom_emoji(name=name,image=f.read(),roles=[anonc_system])
-        
+        # TODO : なんか動かない。
+        guild = next((g for g in self.client.guilds if g==guild))
         for channel in guild.channels:
             if isinstance(channel,(CategoryChannel,)):
                 continue
-            elif isinstance((channel,(TextChannel,))):
+            elif isinstance(channel,(TextChannel,)):
                 await channel.category.edit(name='anonc_system_channels')
-                await channel.category.set_permission(guild.default_role, read_messages=False)
-                await channel.category.set_permission(bot_owner, read_messages=True, send_messages=True)
-                await channel.category.set_permission(anonc_admin, read_messages=True, send_messages=True)
+                await channel.category.set_permissions(guild.default_role, read_messages=False)
+                await channel.category.set_permissions(bot_owner, read_messages=True, send_messages=True)
+                await channel.category.set_permissions(anonc_admin, read_messages=True, send_messages=True)
             else:
                 await channel.category.delete()
-                await channel.dleete()
+                await channel.delete()
         
         return guild
         
@@ -185,7 +186,7 @@ class AnoncIntegrationGuild:
                 continue
             break
         else:
-            g = await self._create_new_anonc_member_guild()
+            g = await self._create_anonc_member_guild()
         
         anonc_ch = await self._create_anonc_chat_channel(g, member)
         self.anonc_chat_channels.append(anonc_ch)
@@ -236,6 +237,8 @@ class AnoncIntegrationGuild:
     async def unregister_member(self, member):
         anonc_chat_channel = self.get_anonc_chat_channel_from_user(member)
         self.anonc_chat_channels.remove(anonc_chat_channel)
+        if anonc_chat_channel.anonc_id_role:
+            await anonc_chat_channel.anonc_id_role.delete()
         await anonc_chat_channel.delete()
         del anonc_chat_channel
 

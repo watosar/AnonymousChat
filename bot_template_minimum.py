@@ -4,7 +4,7 @@ import anonchat
 import os
 
 token = os.environ['token']
-cient = anonchat.AnoncBaseClient()
+client = anonchat.AnoncBaseClient()
 
 
 @client.event

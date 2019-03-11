@@ -126,21 +126,28 @@ class AnoncMessageMaker:
         """
         mentions = []
         for i in self.mention_pat_role.findall(content):
-          anonc_ch = self.client.anonc_guild.get_anonc_chat_channel_from_anonc_id_role_id(int(i))
+            anonc_ch = self.client.anonc_guild.get_anonc_chat_channel_from_anonc_id_role_id(int(i))
           
-          if anonc_ch:
-            mentions.append((f'<@&{i}>',anonc_ch.anonc_id, anonc_ch.anonc_member))
-        for i,*f in self.mention_pat_anonc.findall(content):
-          exist = False
-          if f[0] and int(f[0])<=self.client.anonc_count: # count
-            anonc_id = (await self.client.get_message_numbered(int(f[0]))).content.splitlines()[0][3:] # id:hoge → hoge
-          else: # id
-            anonc_id = f[1]
-          
-          if anonc_id:
-            anonc_ch = self.client.anonc_guild.get_anonc_chat_channel_from_anonc_id(anonc_id)
             if anonc_ch:
-              mentions.append((f'@{i}',i,anonc_ch.anonc_member))
+              mentions.append((f'<@&{i}>',anonc_ch.anonc_id, anonc_ch.anonc_member))
+        for i,*f in self.mention_pat_anonc.findall(content):
+            exist = False
+            if f[0] and int(f[0])<=self.client.anonc_count: # count
+                msg = await self.client.get_message_numbered(int(f[0]))
+                if not msg:
+                    continue
+                anonc_id = msg.content.splitlines()[0][3:] # id:hoge → hoge
+            else: # id
+                anonc_id = f[1]
+          
+            if not anonc_id:
+                continue
+                
+            anonc_ch = self.client.anonc_guild.get_anonc_chat_channel_from_anonc_id(anonc_id)
+            if not anonc_ch:
+                continue
+            
+            mentions.append((f'@{i}',i,anonc_ch.anonc_member))
         
         return mentions
 

@@ -21,6 +21,9 @@ WELCOME !!
 This is Anonymous Chat by nekojyarasi#9236
 '''
 
+MessageMimic = namedtuple('MessageMimic', ('content', 'author', 'created_at'))
+UserMimic = namedtuple('UserMimic', ('name', ))
+
 
 client = anonchat.AnoncBaseClient(
     use_default_system_channel=True,
@@ -66,11 +69,14 @@ async def make_history_html_file():
     channel = client.anonc_guild.anonc_system_history_channel
     messages = []
     history_to = None
+    msg = None
     async for msg in channel.history(limit=1000):
         if not history_to:
             history_to = str(msg.created_at.date())
         messages.append(message_to_html_style(msg))
     else:
+        if not msg:
+            return None
         history_from = str(msg.created_at.date())
     f = discord.File(
         BytesIO(
@@ -171,16 +177,24 @@ async def on_anonc_member_join(anonc_chat_channel):
     message = await anonc_chat_channel.send(welcome_message.format(member=anonc_chat_channel.anonc_member))
     await message.pin()
     await update_presence()
-    client.loop.create_task(anonc_chat_channel.send(file=make_history_html_file()))
+    f = await make_history_html_file()
+    if f:
+        await anonc_chat_channel.send('here is this chat log', file=f)
+        
 
 @client.event
 async def on_anonc_member_removed(member):
+    print(f'{member} removed')
     await update_presence()
   
   
 def webhook_info_message_to_message_obj(message):
     info_dict = json.loads(message.content.replace("'", '"'))
-    msg = anonchat.utils.get_discord_message_mimicked(content=info_dict['content'], author_name=info_dict['username'], created_at=message.created_at)
+    msg = MessageMimic(
+        content=info_dict['content'],
+        author=UserMimic(name=info_dict['username']),
+        created_at=message.created_at
+    )
     return msg
  
  

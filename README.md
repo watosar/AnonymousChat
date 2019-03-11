@@ -4,6 +4,12 @@
 
 Discord上で5ch-likeな匿名チャットを動かすBot
 
+
+## Description
+
+ユーザー毎に専用チャンネルを割り当て、メッセージの送信をwebhookで置き換える事でアカウント情報を隠したままDiscordのチャットを利用できるようにします。
+
+
 ## Requirement
 discord.py rewrite
 
@@ -17,3 +23,4 @@ discord.py rewrite
 
 Discord: nekojyarasi#9236
 Twitter: [@d7iy_l](https://twitter.com/d7iy_l)
+

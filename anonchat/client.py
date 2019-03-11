@@ -4,7 +4,6 @@ import asyncio
 from discord import Client, Guild, DMChannel, Message, MessageType
 from .guild import AnoncIntegrationGuild
 from .message import AnoncMessageMaker
-from .utils import get_discord_message_mimicked
 import typing
 from pathlib import Path
 from collections import namedtuple
@@ -13,7 +12,7 @@ class AnoncCount:
     """
     AnonChat Count descriptor
     """
-    def __get__(self, obj, objtype=None):
+    def __get__(self, obj, objtype=None) -> int:
         return obj.__dict__.get('anonc_count',0)
         
     def __set__(self, obj, value):
@@ -80,7 +79,7 @@ class AnoncBaseClient(Client):
     async def init_anonc_count(self) -> int:
         return 0
         
-    async def on_anonc_count_update(value):
+    async def on_anonc_count_update(self, value) -> None:
         pass
 
     def wait_until_anonc_ready(function):
@@ -177,7 +176,8 @@ class AnoncBaseClient(Client):
     @wait_until_anonc_ready
     async def on_member_remove(self, member) -> None:
         anonc_chat_channel = self.anonc_guild.get_anonc_chat_channel_from_user(member)
-        if anonc_chat_channel or anonc_chat_channel.guild != member.guild:
+        
+        if not anonc_chat_channel or anonc_chat_channel.guild != member.guild:
             print(f'{member} has no channel in {member.guild} removed')
             return
         await self.anonc_guild.unregister_member(member)
@@ -194,9 +194,11 @@ class AnoncBaseClient(Client):
             await guild.leave()
 
     async def on_anonc_member_guild_created(self, guild: Guild) -> None:
-        invite = await guild.channels[0].create_invite()
+        msg = await guild.system_channel.edn('hi')
+        invite = await msg.channel.create_invite()
+        await msg.delete()
         await self.bot_owner.send(f'registered new server : {invite.url}')
 
     async def get_message_numbered(num: int) -> Message:
-        return get_discord_message_mimicked()
+        pass
 
