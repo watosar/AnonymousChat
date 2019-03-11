@@ -124,7 +124,7 @@ async def on_anonc_count_update(value):
 @client.event
 async def on_anonc_message(anonc_message):
     # await run_public_command(message)
-    await client.anonc_guild.anonc_system_history_channel.send(json.dumps(anonc_message.to_dict()))
+    await client.anonc_guild.anonc_system_history_channel.send(json.dumps(anonc_message.to_dict(), ensure_ascii=False))
   
   
 @client.event
