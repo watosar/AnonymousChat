@@ -19,6 +19,7 @@ welcome_message = '''
 {member.mention}
 WELCOME !!
 This is Anonymous Chat by nekojyarasi#9236
+this bot is https://github.com/watosar/AnonymousChat
 '''
 
 MessageMimic = namedtuple('MessageMimic', ('content', 'author', 'created_at'))
@@ -38,6 +39,11 @@ client = anonchat.AnoncBaseClient(
     show_chat_id=True,
     default_name='名無し'
 )
+
+
+# debug
+client._is_message_for_chat = lambda msg: False
+client.on_member_join = client.on_member_remove = None
 
 
 async def update_presence():
@@ -123,7 +129,7 @@ async def on_anonc_count_update(value):
 @client.event
 async def on_anonc_message(anonc_message):
     # await run_public_command(message)
-    await client.anonc_guild.anonc_system_history_channel.send(anonc_message.to_dict())
+    await client.anonc_guild.anonc_system_history_channel.send(json.dumps(anonc_message.to_dict()))
   
   
 @client.event
@@ -189,7 +195,13 @@ async def on_anonc_member_removed(member):
   
   
 def webhook_info_message_to_message_obj(message):
-    info_dict = json.loads(message.content.replace("'", '"'))
+    try:
+        info_dict = json.loads(message.content)
+    except Exception as e:
+        print(e)
+        print(message.content)
+        info_dict = {'content':'ERROR','username':'ERROR'}
+        
     msg = MessageMimic(
         content=info_dict['content'],
         author=UserMimic(name=info_dict['username']),
