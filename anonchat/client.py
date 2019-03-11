@@ -190,14 +190,14 @@ class AnoncBaseClient(Client):
         if guild.owner == guild.me:
             await self.on_anonc_member_guild_created(guild)
         else:
-            await self.bot_owner.send('joined suspicious server\nname: {guild.name}, id: {guild.id}')
+            print('joined suspicious server\nname: {guild.name}, id: {guild.id}')
             await guild.leave()
 
     async def on_anonc_member_guild_created(self, guild: Guild) -> None:
-        msg = await guild.system_channel.edn('hi')
+        msg = await guild.system_channel.send('hi')
         invite = await msg.channel.create_invite()
         await msg.delete()
-        await self.bot_owner.send(f'registered new server : {invite.url}')
+        print(f'registered new server : {invite.url}')
 
     async def get_message_numbered(num: int) -> Message:
         pass

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import re
-from .utils import jst
 import typing
 from copy import deepcopy
 
