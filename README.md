@@ -18,6 +18,9 @@ Discord上で5ch-likeな匿名チャットを動かすBot
 anonchatモジュールの利用例です    
 
 - システムチャンネルの設定及びその利用   
+    - anonc_system_channel_info に渡したdictの各項目と合致するチャンネルがあれば取得し設定。無ければ自動生成
+    - 設定した`system_channel`は`anonc_guild.anonc_system_{channel.name}_channel`でアクセス出来ます
+    - メッセージ受信イベントは`on_message_at_{channel.name}_channel`です
 - `on_anonc_`類のイベントの利用   
 - `get_message_numbered`の実装例   
    
