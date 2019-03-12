@@ -175,6 +175,9 @@ class AnoncBaseClient(Client):
 
     @wait_until_anonc_ready
     async def on_member_remove(self, member) -> None:
+        if member == self.user:
+            return 
+        
         anonc_chat_channel = self.anonc_guild.get_anonc_chat_channel_from_user(member)
         
         if not anonc_chat_channel or anonc_chat_channel.guild != member.guild:
@@ -190,7 +193,7 @@ class AnoncBaseClient(Client):
         if guild.owner == guild.me:
             await self.on_anonc_member_guild_created(guild)
         else:
-            print('joined suspicious server\nname: {guild.name}, id: {guild.id}')
+            print(f'joined suspicious server\nname: {guild.name}, id: {guild.id}')
             await guild.leave()
 
     async def on_anonc_member_guild_created(self, guild: Guild) -> None:

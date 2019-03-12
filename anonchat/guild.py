@@ -59,7 +59,7 @@ class AnoncIntegrationGuild:
                     return True
             return False
           
-        for g in self.anonc_guilds:
+        for g in self.client.guilds:
             if g.owner != self.client.user:
                 await g.leave()
                 print(f'left {g}')
