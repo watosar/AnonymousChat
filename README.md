@@ -6,12 +6,14 @@ Discord上で5ch-likeな匿名チャットを動かすBot
     
 ## Description  
 
+サーバーの生成から自動で動きます   
 ユーザー毎に専用チャンネルを割り当て、メッセージの送信をwebhookで置き換える事でアカウント情報を隠したままDiscordのチャットを利用できるようにします  
 
 また、これによりメンションが出来なくなります。その代わりにチャットID(bot側で任意に変更可能)へのメンションが使えるようになっています 
 
 `get_message_numbered`を書けばメッセージ番号でのメンションも出来るようになります。又、アンカー(">>")で引用も可能になります 
   
+\* **注意** : Botが作成したサーバー以外からは自動で退出します。  
   
   
 ## Description about bot_template_basic.py
@@ -35,7 +37,8 @@ discord.py rewrite
 
 [![Heroku Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/watosar/AnonymousChat)   
 ↑のボタンを押せばherokuにデプロイ出来ます。(アカウントの新規作成又は事前のログインが必要)   
-
+起動すればbot_template_basic.pyが動きます。   
+`Application logs`にサーバーのURLが出るのでそれで生成されたサーバーへ参加してください。    
 
 
 ## Author
