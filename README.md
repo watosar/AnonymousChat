@@ -19,10 +19,12 @@ anonchatモジュールの利用例です
 
 - システムチャンネルの設定及びその利用   
     - anonc_system_channel_info に渡したdictの各項目と合致するチャンネルがあれば取得し設定。無ければ自動生成
+    - 標準の`system_channel`(サーバー作成時自動生成される`general`)利用の可否
     - 設定した`system_channel`は`anonc_guild.anonc_system_{channel.name}_channel`でアクセス出来ます
-    - メッセージ受信イベントは`on_message_at_{channel.name}_channel`です
-- `on_anonc_`類のイベントの利用   
-- `get_message_numbered`の実装例   
+    - メッセージ受信イベントは`on_message_at_{channel.name}_channel`
+- `on_anonc_`類のイベントの利用例
+- `get_message_numbered`の実装例
+- チャットID更新の例
    
    
 ## Requirement
@@ -31,7 +33,9 @@ discord.py rewrite
 
 ## Deploy to Heroku
 
-[![Heroku Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/watosar/AnonymousChat)
+[![Heroku Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/watosar/AnonymousChat)   
+↑のボタンを押せばherokuにデプロイ出来ます。(アカウントの新規作成又は事前のログインが必要)   
+
 
 
 ## Author
