@@ -73,7 +73,7 @@ class AnoncIntegrationGuild:
         if not guild_count:
             await self._create_anonc_member_guild()
         elif self.client.with_role and guild_count>1:
-            print('You cannot be with_role as True\nToggle flg to False')
+            print('with_role cannot be True\nToggle flg to False')
             self.client.with_role = False
       
         for ch in self.client.get_all_channels():
