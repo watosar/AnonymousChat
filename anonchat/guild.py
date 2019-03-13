@@ -62,7 +62,7 @@ class AnoncIntegrationGuild:
         for g in self.client.guilds:
             if g.owner != self.client.user:
                 await g.leave()
-                self.client._state._guilds.pop(g.id,None)
+                self.client._connection._guilds.pop(g.id,None)
                 print(f'left {g}')
             elif g.name==f'AnonChat[{base36encode(self.client.user.id)}]-0':
                 self.anonc_system_guild = g
