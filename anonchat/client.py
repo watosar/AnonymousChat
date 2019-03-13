@@ -195,6 +195,7 @@ class AnoncBaseClient(Client):
         else:
             print(f'joined suspicious server\nname: {guild.name}, id: {guild.id}')
             await guild.leave()
+            print('left')
 
     async def on_anonc_member_guild_created(self, guild: Guild) -> None:
         msg = await guild.system_channel.send('hi')
