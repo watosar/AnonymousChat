@@ -58,15 +58,12 @@ def message_to_html_style(message):
     msg = webhook_info_message_to_message_obj(message)
     return dedent(f'''\
     <p>
-    {msg.author.name}&nbsp;&nbsp;<font color="#acadaf">{str(msg.created_at).split('.')[0]}</font><br>
+    <font color=#ffffff>{msg.author.name}</font>&nbsp;&nbsp;<font color="#5e6168">{str(msg.created_at).split('.')[0]}</font><br>
     &nbsp;&nbsp;&nbsp;{msg.content.replace(chr(10),'<br>&nbsp;&nbsp;&nbsp;')}
     </p>
     ''')
 
 async def make_history_html_file():
-    base = ''
-    with open('./data/logfile-template.html.txt', encoding='utf-8') as f:
-        base = f.read()
     channel = client.anonc_guild.anonc_system_history_channel
     messages = []
     history_to = None
@@ -79,14 +76,23 @@ async def make_history_html_file():
         if not msg:
             return None
         history_from = str(msg.created_at.date())
+    base = ''
+    with open('./data/logfile-template.html', encoding='utf-8') as f:
+        base = f.read()
     f = discord.File(
         BytesIO(
             bytearray(
-                base.format(
-                    history_from=history_from,
-                    history_to=history_to,
-                    messages=''.join(reversed(messages))
-                ).replace(':msg_anchor:', '>>').replace(':at_sign:', '@').replace('[', '{').replace(']', '}'),
+                base.replace(
+                    '{history_from}', history_from
+                ).replace(
+                    '{history_to}', history_to
+                ).replace(
+                    '{messages}', ''.join(reversed(messages)).replace(
+                        ':msg_anchor:', '>>'
+                    ).replace(
+                        ':at_sign:', '@'
+                    )
+                ),
                 'utf-8'
             )
         ),
