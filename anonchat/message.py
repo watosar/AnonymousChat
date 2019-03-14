@@ -40,7 +40,7 @@ class AnoncMessageMaker:
         self.default_name = default_name
         self.anchor_pat = re.compile('(?=(?<=^)|(?<= ))>>([0-9]+)(?= |$)', flags=re.MULTILINE)
         self.mention_pat_role = re.compile('<@&([0-9]+)>', flags=re.MULTILINE)
-        self.mention_pat_anonc = re.compile('@(([0-9]+)|([A-Za-z]{4}))', flags=re.MULTILINE)
+        self.mention_pat_anonc = re.compile('@(([0-9]+)|([A-Za-z]{4,}))', flags=re.MULTILINE)
         self.emojis={'msg_anchor','at_sign'}
     
     

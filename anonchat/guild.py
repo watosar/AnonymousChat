@@ -25,27 +25,29 @@ class AnoncIntegrationGuild:
         
         self.nsfw = nsfw
         
-        self._anonc_system_guild_core = None
+        self._anonc_system_guild_id = None
         
         self.channel_limit = channel_limit
         self.anonc_chat_channels = []
         self.anonc_system_channels = []
         self.anonc_chat_id_roles = []
+        
+        self.base_name = ''
     
     @property
     def anonc_system_guild(self):
-        return next((g for g in self.client.guilds if g==self._anonc_system_guild_core),None)
+        return next((g for g in self.client.guilds if g.id==self._anonc_system_guild_id),None)
     
     @anonc_system_guild.setter
     def anonc_system_guild(self, guild):
-        self._anonc_system_guild_core = guild
+        self._anonc_system_guild_id = guild.id
         
     @property
     def anonc_guilds(self) -> List[Guild]:
       return [g for g in self.client.guilds if g != self.anonc_system_guild]
   
-    async def setup(self, use_defo_sys_ch=False, anonc_sys_chs_info=[{}]) -> None:
-      
+    async def setup(self, base_name=None, use_defo_sys_ch=False, anonc_sys_chs_info=[{}]) -> None:
+        self.base_name = base_name or self.base_name or f'AnonChat[{base36encode(self.client.user.id)}]'
         sys_chs_cache=[]
         def _is_anonc_sys_ch(_ch) -> bool:
             if use_defo_sys_ch:
@@ -64,11 +66,13 @@ class AnoncIntegrationGuild:
                 await g.leave()
                 self.client._connection._guilds.pop(g.id,None)
                 print(f'left {g}')
-            elif g.name==f'AnonChat[{base36encode(self.client.user.id)}]-0':
-                self.anonc_system_guild = g
+            #elif g.name==f'{self.base_name}-0':
+            #    self.anonc_system_guild = g
               
-        if not self.anonc_system_guild:
-            self.anonc_system_guild = await self._create_anonc_system_guild()
+        #if not self.anonc_system_guild:
+        #    # TODO: correspond to base_name changing
+        #    #register時にsystem_guildが無ければ登録する方針で。
+        #    self.anonc_system_guild = await self._create_anonc_system_guild()
       
         guild_count = len(self.anonc_guilds)
         if not guild_count:
@@ -82,7 +86,7 @@ class AnoncIntegrationGuild:
                 continue
         
             if _is_anonc_sys_ch(ch):
-                self.anonc_system_channels.append(ch)
+                self._register_anonc_system_channels(ch)
         
             if not self.get_anonc_chat_channel_from_channel(ch):
                 anon_ch = await self.cast_to_anonc_chat_channel(ch)
@@ -92,24 +96,45 @@ class AnoncIntegrationGuild:
         for left_sys_ch_info in (ch for ch in anonc_sys_chs_info if ch not in sys_chs_cache):
             if not left_sys_ch_info:
                 return 
+            if not self._anonc_system_guild_id:
+                self._anonc_system_guild_id = (await self._create_anonc_system_guild()).id
             channel = await self.anonc_system_guild.create_text_channel(
                 name=left_sys_ch_info.pop('name', 'anonc_sys'),
                 **left_sys_ch_info
             )
-            self.anonc_system_channels.append(channel)
-          
-        self._set_snonc_system_channels_to_attr()
-  
-    def _set_snonc_system_channels_to_attr(self):
-        for ch in self.anonc_system_channels:
-            name = f'anonc_system_{ch.name}_channel'
-            if ch.name=='general' or getattr(self, name, None):
+            self._register_anonc_system_channels(channel)
+    
+    def _register_anonc_system_channels(self, channel):
+        self.anonc_system_channels.append(channel)
+        name = f'anonc_system_{channel.name}_channel'
+        if channel.name=='general' or getattr(self, name, None):
+            return 
+        setattr(self, name, channel)
+        if not self._anonc_system_guild_id:
+            self._anonc_system_guild_id = channel.guild.id
+            #self.client.loop.create_task(self.update_base_name(channel.guild.name, channel.guild))
+        print(name)
+    
+    async def update_base_name(self, new_base_name, guild):
+        order = f'-{guild.name.split("-")[-1]}'
+        if new_base_name[-len(order):] != order:
+            if len(new_base_name+order)>100:
+                await guild.edit(name=self.base_name+order)
+                return False
+        else:
+            new_base_name = new_base_name[:-len(order)]
+            
+        print('new_base_name', new_base_name)
+        for g in self.client.guilds:
+            name = f'{new_base_name}-{g.name.split("-")[-1]}'
+            if g.name == name:
                 continue
-            setattr(self, name, ch)
-            print(name)
+            await g.edit(name=name)
+        self.base_name = new_base_name
+        return True
         
     async def _create_anonc_system_guild(self) -> Guild:
-        guild = await self.client.create_guild(name=f'AnonChat[{base36encode(self.client.user.id)}]-0')
+        guild = await self.client.create_guild(name=f'{self.base_name}-0')
         bot_owner = await guild.create_role(
             name='bot owner',
             permissions=Permissions.all()
@@ -117,7 +142,7 @@ class AnoncIntegrationGuild:
         return guild
         
     async def _create_anonc_member_guild(self) -> Guild:
-        guild = await self.client.create_guild(name=f'AnonChat[{base36encode(self.client.user.id)}]-{len(self.anonc_guilds)+1}')
+        guild = await self.client.create_guild(name=f'{self.base_name}-{len(self.anonc_guilds)+1}')
         
         await guild.default_role.edit(
             mantionable=False,
@@ -127,8 +152,8 @@ class AnoncIntegrationGuild:
             name='bot owner',
             permissions=Permissions.all()
         )
-        anonc_admin = await guild.create_role(
-            name='anonc admin',
+        anonc_moderator = await guild.create_role(
+            name='anonc moderator',
             permissions=Permissions.none()
         )
         anonc_system = await guild.create_role(
@@ -221,16 +246,19 @@ class AnoncIntegrationGuild:
         
         return AnoncChannel(channel, webhook, member, anonc_id_role)
         
+    async def reset_channel_anonc_id(self, ch):
+        new_anonc_id = random_string(4)
+        while self.get_anonc_chat_channel_from_anonc_id(new_anonc_id):
+            new_anonc_id = random_string(4)
+        
+        await ch.edit(topic=new_anonc_id)
+        if ch.anonc_id_role:
+            await ch.anonc_id_role.delete()
+            ch.anonc_id_role = await ch.guild.create_role(name=new_anonc_id, mentionable=True)
+        
     async def reset_all_anonc_id(self):
         for ch in self.anonc_chat_channels:
-            new_anonc_id = random_string(4)
-            while self.get_anonc_chat_channel_from_anonc_id(new_anonc_id):
-                new_anonc_id = random_string(4)
-            
-            await ch.edit(topic=new_anonc_id)
-            if ch.anonc_id_role:
-                await ch.anonc_id_role.delete()
-                ch.anonc_id_role = await ch.guild.create_role(name=new_anonc_id, mentionable=True)
+            await self.reset_channel_anonc_id(ch)
     
     async def delete_all_anonc_id_role(self):
         pass

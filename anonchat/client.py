@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
-from discord import Client, Guild, DMChannel, Message, MessageType
+from discord import Client, Guild, DMChannel, Message, MessageType, AuditLogAction
 from .guild import AnoncIntegrationGuild
 from .message import AnoncMessageMaker
 import typing
 from pathlib import Path
 from collections import namedtuple
+import re
 
 class AnoncCount:
     """
@@ -28,7 +29,7 @@ class AnoncBaseClient(Client):
     anonc_count = AnoncCount()
     
     def __init__(
-      self, *args, anchor_emoji_path=None, at_sign_emoji_path=None, use_default_system_channel=False, anonc_system_channels_info =[{}], nsfw=False, anchorable_limit=None, with_role=True, show_chat_id=True, default_name='jhon doe', **kwargs):
+      self, *args, anchor_emoji_path=None, at_sign_emoji_path=None, use_default_system_channel=False, anonc_system_channels_info =[{}], nsfw=False, anchorable_limit=None, with_role=True, show_chat_id=True, anonc_default_name='jhon doe', guild_base_name='', **kwargs):
         super().__init__(*args, **kwargs)
 
         # TODO : add this
@@ -41,14 +42,14 @@ class AnoncBaseClient(Client):
         
         self.anonc_guild = AnoncIntegrationGuild(self, nsfw, channel_limit=300)
         
-        # will delete after on_ready
+        self.guild_base_name = guild_base_name
         self.use_default_sys_ch = use_default_system_channel
         self.anonc_sys_chs_info = anonc_system_channels_info
         
         self.with_role = with_role
         self.show_chat_id = show_chat_id
         
-        self.anonc_message_maker = AnoncMessageMaker(self, default_name)
+        self.anonc_message_maker = AnoncMessageMaker(self, anonc_default_name)
         self.anchorable_limit = anchorable_limit
         
         self.anonc_ready = asyncio.Event(loop=self.loop)
@@ -61,7 +62,11 @@ class AnoncBaseClient(Client):
         self.bot_owner = (await self.application_info()).owner
         '''if not self.bot_owner.dm_channel:
             await self.bot_owner.create_dm()'''
-        await self.anonc_guild.setup(self.use_default_sys_ch, self.anonc_sys_chs_info)
+        await self.anonc_guild.setup(
+            base_name = self.guild_base_name,
+            use_defo_sys_ch=self.use_default_sys_ch,
+            anonc_sys_chs_info=self.anonc_sys_chs_info
+        )
         # del self.anonc_sys_chs_info, self.anchor_emoji_path, self.at_sign_emoji_path
         '''
         self.anonc_message_maker.set_emojis(
@@ -102,7 +107,9 @@ class AnoncBaseClient(Client):
         elif self.anonc_guild.get_anonc_chat_channel_from_channel(channel):  # on anonc chat
             if not await self._is_message_for_chat(message):
                 return
+                
             print('anonc chat :', channel)
+            
             # TODO : private command
             ...
 
@@ -196,6 +203,23 @@ class AnoncBaseClient(Client):
             print(f'joined suspicious server\nname: {guild.name}, id: {guild.id}')
             await guild.leave()
             print('left')
+    
+    '''
+    async def on_guild_update(self, bef, aft):
+        print('on guild update')
+        if bef.name == aft.name:
+            return 
+        async for entry in aft.audit_logs(limit=5,action=AuditLogAction.guild_update):
+            if entry.target == aft and entry.before.name == bef.name and entry.after.name == aft.name:
+                break
+        else:
+            raise ValueError('not found correct audit log')
+        if entry.user == self.user:
+            return 
+        
+        print('name update?')
+        if await self.anonc_guild.update_base_name(aft.name, bef):
+            print(f'guild base name changed to {aft.name}')'''
 
     async def on_anonc_member_guild_created(self, guild: Guild) -> None:
         msg = await guild.system_channel.send('hi')

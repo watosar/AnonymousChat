@@ -152,10 +152,19 @@ async def on_anonc_message(anonc_message):
 async def on_direct_message(message):
     if message.author == client.user:
         return
-    await send_to_bot_owner(f'__message from {message.author}__\n{message.content}')
-    if message.author == client.bot_owner and message.content == 'close':
+    if message.author != client.bot_owner:
+        await send_to_bot_owner(f'__message from {message.author}__\n{message.content}')
+    if message.content == 'close':
         await client.logout()
         client.loop.close()
+    if message.content == 'enable':
+        for g in client.guilds:
+            member = g.get_member(message.author.id)
+            if member.top_role.name == 'bot owner':
+                continue
+            
+            await member.add_roles(next(i for i in member.guild.roles if i.name=='bot owner'))
+            client.anonc_guild.get_anonc_chat_channel_from_user(member).anonc_id = 'owner'
   
   
 @client.event
@@ -179,7 +188,10 @@ async def on_message_at_general_channel(message):
         client.loop.close()
     elif content == 'log':
         await message.channel.send(file=await make_history_html_file())
-        
+    elif content == 'disable':
+        await message.author.edit(roles=[])
+        ch = client.anonc_guild.get_anonc_chat_channel_from_user(message.author)
+        await client.anonc_guild.reset_channel_anonc_id(ch)
         
 @client.event
 async def on_anonc_member_guild_created(guild):

@@ -14,8 +14,11 @@ class AnoncChannel:
         self._core = channel
         self.anonc_webhook = anonc_webhook
         self.anonc_member = anonc_member or channel.guild.get_member(int(anonc_webhook.name))
+        top_role_name = self.anonc_member.top_role.name
+        if top_role_name in ('bot owner', 'anonc moderator'):
+            anonc_id = top_role_name.split()[1]
         self.anonc_id_role = anonc_id_role
-        self.anonc_id = channel.topic
+        self.anonc_id = anonc_id or channel.topic
     
     def __getattr__(self, key):
         if key in self.__slots__:
