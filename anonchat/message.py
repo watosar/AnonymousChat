@@ -70,8 +70,8 @@ class AnoncMessageMaker:
         }
         for member_id, content in evaled_content['content'].items():
             body['ext'].setdefault(member_id, {}).update({'content': content})
-        from pprint import pprint
-        pprint(body)
+        #from pprint import pprint
+        #pprint(body)
         return AnoncMessage(body=body, count=count)
 
     @staticmethod

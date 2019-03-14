@@ -9,6 +9,7 @@ from collections import namedtuple
 from textwrap import dedent
 import os
 from io import BytesIO
+import typing
 
 asyncio.set_event_loop(asyncio.new_event_loop())
 logging.basicConfig(level=logging.INFO)
@@ -51,16 +52,16 @@ client = anonchat.AnoncBaseClient(
     nsfw=True,
     with_role=True,
     show_chat_id=True,
-    default_name='名無し'
+    anonc_default_name='名無し'
 )
 
 
-async def update_presence():
+async def update_presence() -> None:
     game = discord.Game(name=f'{len(client.anonc_guild.anonc_chat_channels)}人')
     await client.change_presence(activity=game)
     
     
-async def send_to_bot_owner(content):
+async def send_to_bot_owner(content) -> None:
     print(content)
     try:
         await client.bot_owner.send(content)
@@ -68,7 +69,7 @@ async def send_to_bot_owner(content):
         print('Exception', e)
 
 
-def message_to_html_style(message):
+def message_to_html_style(message) -> str:
     msg = webhook_info_message_to_message_obj(message)
     return dedent(f'''\
     <p>
@@ -77,7 +78,7 @@ def message_to_html_style(message):
     </p>
     ''')
 
-async def make_history_html_file():
+async def make_history_html_file() -> typing.Optional[discord.File]:
     channel = client.anonc_guild.anonc_system_history_channel
     messages = []
     history_to = None
@@ -116,7 +117,7 @@ async def make_history_html_file():
      
 
 @client.event
-async def on_anonc_ready():
+async def on_anonc_ready() -> None:
     await update_presence()
     await send_to_bot_owner('I’m ready')
     print('member guilds')
@@ -129,7 +130,7 @@ async def on_anonc_ready():
 
 
 @client.event
-async def init_anonc_count():
+async def init_anonc_count() -> int:
     ch = client.anonc_guild.anonc_system_count_channel
     async for m in ch.history(limit=1):
         return int(m.content)
@@ -138,18 +139,18 @@ async def init_anonc_count():
         
 
 @client.event
-async def on_anonc_count_update(value):
+async def on_anonc_count_update(value: int) -> None:
     await client.anonc_guild.anonc_system_count_channel.send(value)
         
   
 @client.event
-async def on_anonc_message(anonc_message):
+async def on_anonc_message(anonc_message: anonchat.message.AnoncMessage) -> None:
     # await run_public_command(message)
     await client.anonc_guild.anonc_system_history_channel.send(json.dumps(anonc_message.to_dict(), ensure_ascii=False))
   
   
 @client.event
-async def on_direct_message(message):
+async def on_direct_message(message: discord.Message) -> None:
     if message.author == client.user:
         return
     if message.author != client.bot_owner:
@@ -168,14 +169,14 @@ async def on_direct_message(message):
   
   
 @client.event
-async def on_message_at_timer_channel(message):
+async def on_message_at_timer_channel(message: discord.Message) -> None:
     print(f'reset anonc id : {message.content}')
     await client.anonc_guild.reset_all_anonc_id()
     await send_to_bot_owner('anonc id reseted')
     
 
 @client.event
-async def on_message_at_general_channel(message):
+async def on_message_at_general_channel(message: discord.Message) -> None:
     if message.author == client.user:
         return
     content = message.content
@@ -194,7 +195,7 @@ async def on_message_at_general_channel(message):
         ch.anonc_id = ch.topic
         
 @client.event
-async def on_anonc_member_guild_created(guild):
+async def on_anonc_member_guild_created(guild: discord.Guild) -> None:
     print('new guild created', guild)
     msg = await guild.system_channel.send('hello')
     invite = await msg.channel.create_invite()
@@ -207,7 +208,7 @@ async def on_anonc_member_guild_created(guild):
         
         
 @client.event
-async def on_anonc_member_join(anonc_chat_channel):
+async def on_anonc_member_join(anonc_chat_channel: anonchat.channel.AnoncChannel) -> None:
     message = await anonc_chat_channel.send(welcome_message_0.format(member=anonc_chat_channel.anonc_member))
     await message.pin()
     await update_presence()
@@ -217,12 +218,12 @@ async def on_anonc_member_join(anonc_chat_channel):
         
 
 @client.event
-async def on_anonc_member_removed(member):
+async def on_anonc_member_removed(member: discord.Member) -> None:
     print(f'{member} removed')
     await update_presence()
   
   
-def webhook_info_message_to_message_obj(message):
+def webhook_info_message_to_message_obj(message: discord.Message) -> MessageMimic:
     try:
         info_dict = json.loads(message.content)
     except Exception as e:
@@ -239,7 +240,7 @@ def webhook_info_message_to_message_obj(message):
  
  
 @client.event
-async def get_message_numbered(num):
+async def get_message_numbered(num: int) -> MessageMimic:
     channel = client.anonc_guild.anonc_system_history_channel
     loop_limit = client.anonc_count - num
     async for message in channel.history(limit=loop_limit):
