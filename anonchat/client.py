@@ -29,7 +29,7 @@ class AnoncBaseClient(Client):
     anonc_count = AnoncCount()
     
     def __init__(
-      self, *args, anchor_emoji_path=None, at_sign_emoji_path=None, use_default_system_channel=False, anonc_system_channels_info =[{}], nsfw=False, anchorable_limit=None, with_role=True, show_chat_id=True, anonc_default_name='jhon doe', guild_base_name='', **kwargs):
+      self, *args, anchor_emoji_path=None, at_sign_emoji_path=None, use_default_system_channel=False, anonc_system_channels_info =[{}], nsfw=False, anchorable_limit=None, with_role=True, show_chat_id=True, anonc_default_name='john doe', guild_base_name='', **kwargs):
         super().__init__(*args, **kwargs)
 
         # TODO : add this
