@@ -146,7 +146,7 @@ class AnoncIntegrationGuild:
         
         await guild.default_role.edit(
             mantionable=False,
-            permissions=Permissions.none()
+            permissions=Permissions(permissions=134217728) #  manage nickname
         )
         bot_owner = await guild.create_role(
             name='bot owner',
