@@ -15,11 +15,25 @@ logging.basicConfig(level=logging.INFO)
 
 token = os.environ['token']
 
-welcome_message = '''
+welcome_message_0 = '''
 {member.mention}
 WELCOME !!
 This is Anonymous Chat by nekojyarasi#9236
-This bot is https://github.com/watosar/AnonymousChat
+https://github.com/watosar/AnonymousChat
+
+
+・機能概要
+ユーザーが使用可能な機能は以下の2つです。
+①@ID 又は @番号 でそのメンバーにメンション
+②>>番号 でメッセージ引用
+有効なメンションでは ＠ 及び >> が送信時に絵文字に置き換えられます。
+これは可読性の向上を意図したもので、ユーザー側からこの絵文字を使用する事は出来ません。
+
+ユーザーにはそれぞれ専用のチャンネルが割り当てられており、その内部ではメッセージがそのユーザーに対して調整されます。具体的には以下の3項目です。
+①送信者アイコンにユーザーのものと同一のものを使用
+②ID を YOU として表示
+③@ID 又は @番号 によるメンションをそのユーザーへのものに変換
+
 '''
 
 MessageMimic = namedtuple('MessageMimic', ('content', 'author', 'created_at'))
@@ -111,6 +125,7 @@ async def on_anonc_ready():
         if g == client.anonc_guild.anonc_system_guild and client.bot_owner not in g.members:
             invite = (await g.invites())[0]
             print(f'you should join here {invite}')
+    #print(f'guild base name is {client.anonc_guild.base_name}')
 
 
 @client.event
@@ -181,7 +196,7 @@ async def on_anonc_member_guild_created(guild):
         
 @client.event
 async def on_anonc_member_join(anonc_chat_channel):
-    message = await anonc_chat_channel.send(welcome_message.format(member=anonc_chat_channel.anonc_member))
+    message = await anonc_chat_channel.send(welcome_message_0.format(member=anonc_chat_channel.anonc_member))
     await message.pin()
     await update_presence()
     f = await make_history_html_file()
