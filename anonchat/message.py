@@ -25,9 +25,8 @@ class AnoncMessage:
                     continue
                 embed['description'] = embed['description'].replace(':msg_anchor:', anchor_emoji).replace(':at_sign:', at_sign_emoji)
         adapted.update(ext)
-        
-        adapted['content'] = f'ID:{adapted.pop("anonc_id")}\n{adapted["content"]}'
-        adapted['username'] = f'{self.count}:{adapted["username"]}'
+        adapted['content'] = f'ID:{adapted.pop("anonc_id")}\n{adapted["content"]}'[:2000]
+        adapted['username'] = f'{self.count}:{adapted["username"]}'[:32]
         return adapted
 
 

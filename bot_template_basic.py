@@ -146,7 +146,16 @@ async def on_anonc_count_update(value: int) -> None:
 @client.event
 async def on_anonc_message(anonc_message: anonchat.message.AnoncMessage) -> None:
     # await run_public_command(message)
-    await client.anonc_guild.anonc_system_history_channel.send(json.dumps(anonc_message.to_dict(), ensure_ascii=False))
+    msg_data = anonc_message.to_dict()
+    data = json.dumps(msg_data ,ensure_ascii=False)
+    if len(data)>2000:
+        msg_data.pop('embeds')
+        data = json.dumps(msg_data ,ensure_ascii=False)
+        new_len = len(data)
+        if new_len>2000:
+            msg_data['content']=msg_data['content'][:2000-new_len]
+            data = json.dumps(msg_data ,ensure_ascii=False)
+    await client.anonc_guild.anonc_system_history_channel.send(data)
   
   
 @client.event
