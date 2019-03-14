@@ -39,6 +39,8 @@ class AnoncChannel:
     
     async def edit(self, **kwargs):
         if 'topic' in kwargs:
-            self.anonc_id = kwargs['topic']
+            new_anonc_id = kwargs['topic']
+            if self.anonc_id not in ('owner', 'moderator'):
+                self.anonc_id = new_anonc_id
         await self._core.edit(**kwargs)
 

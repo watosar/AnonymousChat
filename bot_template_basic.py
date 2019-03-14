@@ -191,7 +191,7 @@ async def on_message_at_general_channel(message):
     elif content == 'disable':
         await message.author.edit(roles=[])
         ch = client.anonc_guild.get_anonc_chat_channel_from_user(message.author)
-        await client.anonc_guild.reset_channel_anonc_id(ch)
+        ch.anonc_id = ch.topic
         
 @client.event
 async def on_anonc_member_guild_created(guild):
