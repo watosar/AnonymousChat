@@ -8,6 +8,7 @@ import typing
 from pathlib import Path
 from collections import namedtuple
 import re
+import aiohttp
 
 class AnoncCount:
     """

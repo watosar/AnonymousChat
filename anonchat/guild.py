@@ -77,7 +77,8 @@ class AnoncIntegrationGuild:
         guild_count = len(self.anonc_guilds)
         if not guild_count:
             await self._create_anonc_member_guild()
-        elif self.client.with_role and guild_count>1:
+        elif self.client.with_role and guild_count>2:
+            print([i.name for i in self.anonc_guilds])
             print('with_role cannot be True\nToggle flg to False')
             self.client.with_role = False
       
@@ -113,7 +114,8 @@ class AnoncIntegrationGuild:
         if not self._anonc_system_guild_id:
             self._anonc_system_guild_id = channel.guild.id
             #self.client.loop.create_task(self.update_base_name(channel.guild.name, channel.guild))
-        print(name)
+            
+        print('registered:',name)
     
     async def update_base_name(self, new_base_name, guild):
         order = f'-{guild.name.split("-")[-1]}'
