@@ -20,9 +20,10 @@ class AnoncIntegrationGuild:
     manage AnonChat member guilds | channels
     """
     
-    def __init__(self, client, nsfw, channel_limit=500):
+    def __init__(self, client, use_role, nsfw, channel_limit=500):
         self.client = client
         
+        self.use_role = use_role
         self.nsfw = nsfw
         
         self._anonc_system_guild_id = None
@@ -43,7 +44,7 @@ class AnoncIntegrationGuild:
         self._anonc_system_guild_id = guild.id
         
     @property
-    def anonc_guilds(self) -> List[Guild]:
+    def anonc_chat_guilds(self) -> List[Guild]:
       return [g for g in self.client.guilds if g != self.anonc_system_guild]
   
     async def setup(self, base_name=None, use_defo_sys_ch=False, anonc_sys_chs_info=[{}]) -> None:
@@ -66,6 +67,7 @@ class AnoncIntegrationGuild:
                 await g.leave()
                 self.client._connection._guilds.pop(g.id,None)
                 print(f'left {g}')
+            
             #elif g.name==f'{self.base_name}-0':
             #    self.anonc_system_guild = g
               
@@ -74,13 +76,13 @@ class AnoncIntegrationGuild:
         #    #register時にsystem_guildが無ければ登録する方針で。
         #    self.anonc_system_guild = await self._create_anonc_system_guild()
       
-        guild_count = len(self.anonc_guilds)
+        guild_count = len(self.client.guilds)
         if not guild_count:
             await self._create_anonc_member_guild()
-        elif self.client.with_role and guild_count>2:
-            print([i.name for i in self.anonc_guilds])
-            print('with_role cannot be True\nToggle flg to False')
-            self.client.with_role = False
+        elif self.use_role and guild_count > 2:
+            print([i.name for i in self.anonc_chat_guilds])
+            print('use_role cannot be True\nToggle flg to False')
+            await self.disable_use_role()
       
         for ch in self.client.get_all_channels():
             if not isinstance(ch,(TextChannel,)):
@@ -144,7 +146,9 @@ class AnoncIntegrationGuild:
         return guild
         
     async def _create_anonc_member_guild(self) -> Guild:
-        guild = await self.client.create_guild(name=f'{self.base_name}-{len(self.anonc_guilds)+1}')
+        if len(self.client.guilds) >= 2:
+            await self.disable_use_role()
+        guild = await self.client.create_guild(name=f'{self.base_name}-{len(self.anonc_chat_guilds)+1}')
         
         await guild.default_role.edit(
             mantionable=False,
@@ -183,16 +187,20 @@ class AnoncIntegrationGuild:
         return guild
         
     async def cast_to_anonc_chat_channel(self, channel) -> Optional[AnoncChannel]:
-        webhooks = await channel.webhooks()
+        print('-'*10)
+        webhooks  = await channel.webhooks()
         for w in webhooks:
             if w.user == self.client.user and w.name.isdigit() and anonc_id_pat.fullmatch(channel.topic):
                 anonc_id_role = None
-                if self.client.with_role:
+                if self.use_role:
                     anonc_id_role = next((r for r in channel.guild.roles if r.name==channel.topic),None)# or await channel.guild.create_role(name=channel.topic)
                     if not anonc_id_role:
+                        print('no matched role:', channel.topic)
                         continue
                 return AnoncChannel(channel, w, anonc_id_role=anonc_id_role)
-    
+        if not webhooks:
+            print('no webhook',channel.name)
+            
     def get_anonc_system_guild_emoji_named(self, name) -> Optional[AnoncChannel]:
         return next((e for e in self.anonc_system_guild.emojis if e.name==name),None)
 
@@ -209,7 +217,7 @@ class AnoncIntegrationGuild:
         return next((ch for ch in self.anonc_chat_channels if ch.anonc_member==user),None)
 
     async def register_member(self, member):
-        for g in sorted(self.anonc_guilds,key=lambda g: len(g.channels),reverse=True):
+        for g in sorted(self.anonc_chat_guilds,key=lambda g: len(g.channels),reverse=True):
             if len(g.channels)>=self.channel_limit:
                 continue
             break
@@ -240,7 +248,7 @@ class AnoncIntegrationGuild:
             anonc_id = random_string(4)
         
         anonc_id_role = None
-        if self.client.with_role:
+        if self.use_role:
             anonc_id_role = await guild.create_role(name=anonc_id, mentionable=True)
         
         channel = await guild.create_text_channel('anon chat', overwrites=overwrites, topic=anonc_id, nsfw=self.nsfw)
@@ -261,9 +269,35 @@ class AnoncIntegrationGuild:
     async def reset_all_anonc_id(self):
         for ch in self.anonc_chat_channels:
             await self.reset_channel_anonc_id(ch)
+            
+    async def disable_use_role(self):
+        self.use_role = False
+        count = 0
+        for ch in self.anonc_chat_channels:
+            await ch.anonc_id_role.delete()
+            ch.anonc_id_role = None
+        for g in self.anonc_chat_guilds:
+            for r in g.roles:
+                if not anonc_id_pat.fullmatch(r.name):
+                    continue
+                await r.delete()
+                print(r.name, end=' ')
+                count+=1
+        print(f'deleted {count} roles')
+        await self.setup()
+        
     
-    async def delete_all_anonc_id_role(self):
-        pass
+    async def enable_use_role(self):
+        if len(self.anonc_chat_guilds) > 1 or len(self.anonc_chat_channels) > 247:
+            raise ValueError('cannot use roles')
+        self.use_role = False
+        await self.setup()
+        g = self.anonc_chat_guilds[0]
+        for ch in self.anonc_chat_channels:
+            role = await g.create_role(name=ch.topic, mentionable=True)
+            ch.anonc_id_role = role
+        print('done enabling use role')
+    
     
     async def unregister_member(self, member):
         anonc_chat_channel = self.get_anonc_chat_channel_from_user(member)

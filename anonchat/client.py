@@ -30,7 +30,7 @@ class AnoncBaseClient(Client):
     anonc_count = AnoncCount()
     
     def __init__(
-      self, *args, anchor_emoji_path=None, at_sign_emoji_path=None, use_default_system_channel=False, anonc_system_channels_info =[{}], nsfw=False, anchorable_limit=None, with_role=True, show_chat_id=True, anonc_default_name='John Doe', guild_base_name='', **kwargs):
+      self, *args, anchor_emoji_path=None, at_sign_emoji_path=None, use_default_system_channel=False, anonc_system_channels_info =[{}], nsfw=False, anchorable_limit=None, use_role=True, show_chat_id=True, anonc_default_name='John Doe', guild_base_name='', **kwargs):
         super().__init__(*args, **kwargs)
 
         # TODO : add this
@@ -41,13 +41,16 @@ class AnoncBaseClient(Client):
         self.at_sign_emoji_path = at_sign_emoji_path or Path(__file__).parent/'template/at_sign.png'
         
         
-        self.anonc_guild = AnoncIntegrationGuild(self, nsfw, channel_limit=300)
+        self.anonc_guild = AnoncIntegrationGuild(
+            self,
+            use_role=use_role,
+            nsfw=nsfw,
+            channel_limit=300)
         
         self.guild_base_name = guild_base_name
         self.use_default_sys_ch = use_default_system_channel
         self.anonc_sys_chs_info = anonc_system_channels_info
         
-        self.with_role = with_role
         self.show_chat_id = show_chat_id
         
         self.anonc_message_maker = AnoncMessageMaker(self, anonc_default_name)
@@ -181,9 +184,9 @@ class AnoncBaseClient(Client):
 
     async def _should_register_member(self, member) -> bool:
         if member.guild != self.anonc_guild.anonc_system_guild and not self.anonc_guild.get_anonc_chat_channel_from_user(member):
-            if self.with_role and len(self.anonc_guild.anonc_guilds[0].roles)>249:
+            if self.anonc_guild.use_role and len(self.anonc_guild.anonc_chat_guilds[0].roles)>249:
                 return False
-            elif len(self.guilds)>9 and min(len(g.channels) for g in self.anonc_guilds)>=self.anonc_guild.channel_limit:
+            elif len(self.guilds)>9 and min(len(g.channels) for g in self.anonc_chat_guilds)>=self.anonc_guild.channel_limit:
                 return False
             return True
         else:

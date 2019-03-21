@@ -9,6 +9,7 @@ from collections import namedtuple
 from textwrap import dedent
 import os
 from io import BytesIO
+import html
 import typing
 
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -74,7 +75,7 @@ def message_to_html_style(message) -> str:
     msg = webhook_info_message_to_message_obj(message)
     return dedent(f'''\
     <p class="author"><font>{msg.author.name}</font>&nbsp;&nbsp;<font>{str(msg.created_at).split('.')[0]}</font></p>
-    <p class="content">{msg.content.replace(chr(10),'<br>')}</p>''')
+    <p class="content">{html.escape(msg.content).replace(chr(10),'<br>')}</p>''')
     
 
 async def make_history_html_file() -> typing.Optional[discord.File]:
@@ -169,7 +170,7 @@ async def on_direct_message(message: discord.Message) -> None:
     elif message.content == 'reset':
         print('reset anonc')
         await client.on_ready()
-    elif message.content == 'enable':
+    elif message.content == 'enable owner authority':
         for g in client.guilds:
             member = g.get_member(message.author.id)
             if member.top_role.name == 'bot owner':
@@ -201,12 +202,16 @@ async def on_message_at_general_channel(message: discord.Message) -> None:
     elif message.content == 'reset':
         print('reset anonc')
         await client.on_ready()
-    elif content == 'log':
+    elif content == 'history':
         await message.channel.send(file=await make_history_html_file())
-    elif content == 'disable':
+    elif content == 'disable owner authority':
         await message.author.edit(roles=[])
         ch = client.anonc_guild.get_anonc_chat_channel_from_user(message.author)
         ch.anonc_id = ch.topic
+    elif content == 'disable use_role option':
+        await client.anonc_guild.disable_use_role()
+    elif content == 'enable use_role option':
+        await client.anonc_guild.enable_use_role()
         
 @client.event
 async def on_anonc_member_guild_created(guild: discord.Guild) -> None:
@@ -214,7 +219,7 @@ async def on_anonc_member_guild_created(guild: discord.Guild) -> None:
     msg = await guild.system_channel.send('hello')
     invite = await msg.channel.create_invite()
     await send_to_bot_owner(f'registered new server : {invite.url}')
-    anonc_system_guild = client.anonc_guild.anonc_system_guild
+    anonc_system_guild = client.anonc_system_guild
     if anonc_system_guild:
         await anonc_system_guild.system_channel.send(f'registered new server : {invite.url}')
     elif guild.name.split('-')[-1] == '0':
