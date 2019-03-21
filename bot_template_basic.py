@@ -166,7 +166,8 @@ async def on_direct_message(message: discord.Message) -> None:
     if message.content == 'close':
         await client.logout()
         client.loop.close()
-    elif message.content == 're ready':
+    elif message.content == 'reset':
+        print('reset anonc')
         await client.on_ready()
     elif message.content == 'enable':
         for g in client.guilds:
@@ -197,6 +198,9 @@ async def on_message_at_general_channel(message: discord.Message) -> None:
     elif content == 'close':
         await client.logout()
         client.loop.close()
+    elif message.content == 'reset':
+        print('reset anonc')
+        await client.on_ready()
     elif content == 'log':
         await message.channel.send(file=await make_history_html_file())
     elif content == 'disable':
