@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from math import log, ceil
+from random import choice
 
 letters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 
 
 def random_string(len_:int) -> str:
-    return ''.join(__import__('random').choice(letters[10:]) for _ in range(len_))
+    return ''.join(choice(letters[10:]) for _ in range(len_))
 
 
 def base36encode(num:int) -> str:
