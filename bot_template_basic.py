@@ -58,7 +58,8 @@ client = anonchat.AnoncBaseClient(
 
 async def update_presence() -> None:
     game = discord.Game(name=f'{len(client.anonc_guild.anonc_chat_channels)}人')
-    await client.change_presence(activity=game)
+    print(f'now anonc have {len(client.anonc_guild.anonc_chat_channels)}members'))
+    await client.change_ presence(activity=game) 
     
     
 async def send_to_bot_owner(content) -> None:
