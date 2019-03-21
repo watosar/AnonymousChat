@@ -58,7 +58,7 @@ client = anonchat.AnoncBaseClient(
 
 async def update_presence() -> None:
     game = discord.Game(name=f'{len(client.anonc_guild.anonc_chat_channels)}人')
-    print(f'now anonc have {len(client.anonc_guild.anonc_chat_channels)}members'))
+    print(f'now anonc have {len(client.anonc_guild.anonc_chat_channels)}members')
     await client.change_ presence(activity=game) 
     
     
@@ -166,7 +166,9 @@ async def on_direct_message(message: discord.Message) -> None:
     if message.content == 'close':
         await client.logout()
         client.loop.close()
-    if message.content == 'enable':
+    elif message.content == 're ready':
+        await client.on_ready()
+    elif message.content == 'enable':
         for g in client.guilds:
             member = g.get_member(message.author.id)
             if member.top_role.name == 'bot owner':
