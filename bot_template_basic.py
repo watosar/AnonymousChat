@@ -72,11 +72,9 @@ async def send_to_bot_owner(content) -> None:
 def message_to_html_style(message) -> str:
     msg = webhook_info_message_to_message_obj(message)
     return dedent(f'''\
-    <p>
-    <font color=#ffffff>{msg.author.name}</font>&nbsp;&nbsp;<font color="#5e6168">{str(msg.created_at).split('.')[0]}</font><br>
-    &nbsp;&nbsp;&nbsp;{msg.content.replace(chr(10),'<br>&nbsp;&nbsp;&nbsp;')}
-    </p>
-    ''')
+    <p class="author"><font>{msg.author.name}</font>&nbsp;&nbsp;<font>{str(msg.created_at).split('.')[0]}</font></p>
+    <p class="content">{msg.content.replace(chr(10),'<br>')}</p>''')
+    
 
 async def make_history_html_file() -> typing.Optional[discord.File]:
     channel = client.anonc_guild.anonc_system_history_channel
@@ -92,7 +90,7 @@ async def make_history_html_file() -> typing.Optional[discord.File]:
             return None
         history_from = str(msg.created_at.date())
     base = ''
-    with open('./data/logfile-template.html', encoding='utf-8') as f:
+    with open('./data/history-template.html', encoding='utf-8') as f:
         base = f.read()
     f = discord.File(
         BytesIO(
@@ -111,7 +109,7 @@ async def make_history_html_file() -> typing.Optional[discord.File]:
                 'utf-8'
             )
         ),
-        filename='logfile.html'
+        filename='history.html'
     )
     return f
      

@@ -115,6 +115,11 @@ class AnoncBaseClient(Client):
 
             anonc_count = self.anonc_count+1
             self.anonc_count+=1
+            
+            attachments = message.attachments
+            if attachments:
+                await self.head_request_to_attachments(attachments)
+            
             anonc_message = await self.anonc_message_maker.make(message, anonc_count)
             self.loop.create_task(self.anonc_send(anonc_message)).add_done_callback(lambda _:self.loop.create_task(message.delete()))
             self.loop.create_task(self.on_anonc_message(anonc_message))  # for public command etc
@@ -129,6 +134,12 @@ class AnoncBaseClient(Client):
             print('else :', message, message.channel)
 
         return
+    
+    async def head_request_to_attachments(self, attachments):
+        async def head_request(url):
+            async with aiohttp.request('HEAD', url):
+                pass
+        await asyncio.wait([self.loop.create_task(head_request(a.url)) for a in attachments])
 
     async def _is_message_for_chat(self, msg: Message) -> bool:
         if getattr(msg, 'webhook_id', None):  # check is self webhook

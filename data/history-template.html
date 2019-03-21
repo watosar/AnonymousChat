@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>AnonChat History</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        html, body {
+            position: absolute;
+            background-color: #363940;
+            font-family: "Arial";
+            font-size: 14px;
+            margin: 0px;
+        }
+        p {
+            color: #c3c4c6;
+        }
+        p.title {
+            position: relative;
+            top: 0px;
+            left: 0px;
+            background-color: #303136;
+            color: #eeeeee;
+            font-weight: bold;
+            font-size: 19px;
+            line-height: 19px;
+            padding-top: 20px;
+            padding-bottom: 10px;
+            padding-left: 8px;
+            width: calc(100vw - 8px);
+            margin: 0px;
+            border-bottom: 0.5px solid #000000;
+        }
+        p.title font:first-child {
+            color: #acadaf;
+        }
+        p.time_range {
+            font-size: 13px;
+            text-align: right;
+            line-height: 0px;
+            height: 0px;
+            right: 3px;
+            margin: 0px;
+            position: relative;
+            top: -13px;
+            z-index: 1;
+        }
+        div#historybox {
+            margin: 0px;
+            padding-left: 8px;
+            height: calc(100vh - 49.5px);
+            overflow: auto;
+        }
+        p.author {
+            height: 14px;
+            margin-bottom: 7px;
+        }
+        p.author font:first-child {
+            color: #ffffff;
+        }
+        p.author font:nth-of-type(2) {
+            color: #5e6168;
+        }
+        p.content {
+            margin-top: 7px;
+        }
+    </style>
+    </head>
+    <body>
+        <p class="title"><font>＃</font>history</p>
+        <p class="time_range">from:{history_from} to:{history_to}</p>
+        <div id="historybox">
+            <!--<p class="author"><font>1:名無し</font>&nbsp;&nbsp;<font>2019/03/09</font></p>
+            <p class="content">ID:hoge<br>hogehoge</p>-->
+            {messages}
+        </div>
+        <script>
+        var obj = document.getElementById("historybox");
+        obj.scrollTop = obj.scrollHeight;
+        </script>
+    </body>
+</html>
+
