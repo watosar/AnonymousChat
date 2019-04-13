@@ -62,7 +62,7 @@ class AnoncMessageMaker:
                 {
                     msg.author.id:
                         {
-                            'avatar_url': msg.author.avatar_url,
+                            'avatar_url': str(msg.author.avatar_url),
                             'anonc_id': 'YOU'
                         }
                 }
