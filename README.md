@@ -44,5 +44,5 @@ discord.py rewrite
 ## Author
 
 Discord: nekojyarasi#9236   
-Twitter: [@d7iy_l](https://twitter.com/d7iy_l)
+Twitter: [@owl_jyarasi](https://twitter.com/owl_jyarasi)
 
