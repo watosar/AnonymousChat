@@ -99,8 +99,7 @@ class AnoncMessageMaker:
                 'title': 'attachments',
             }
             url = a.proxy_url
-            if url.split('.')[-1] in ('jpg','jpeg','png','webp','gif'):
-                # TODO : access to image
+            if url.split('.')[-1].lower() in ('jpg','jpeg','png','webp','gif'):
                 image_attachments.append(url)
             else:
                 not_image_attachments.append(url)
