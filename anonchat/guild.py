@@ -6,11 +6,6 @@ from .utils import base36encode, random_string
 from typing import Optional,List
 import re
 
-'''
-while guild is single
-    can use role
-'''
-
 
 anonc_id_pat = re.compile('[a-zA-Z]{4}')
 
@@ -60,6 +55,7 @@ class AnoncIntegrationGuild:
                 if all(getattr(_ch, k)==v for k, v in i.items()):
                     sys_chs_cache.append(i)
                     return True
+            print(_ch)
             return False
           
         for g in self.client.guilds:
@@ -85,16 +81,26 @@ class AnoncIntegrationGuild:
             await self.disable_use_role()
       
         for ch in self.client.get_all_channels():
+            print('-'*10)
+            print(ch)
+            
             if not isinstance(ch,(TextChannel,)):
+                print('pass')
                 continue
         
             if _is_anonc_sys_ch(ch):
                 self._register_anonc_system_channels(ch)
+                print('is system ch')
         
             if not self.get_anonc_chat_channel_from_channel(ch):
                 anon_ch = await self.cast_to_anonc_chat_channel(ch)
                 if anon_ch:
                     self.anonc_chat_channels.append(anon_ch)
+                    print('is anonc ch')
+                else:
+                    print('pass')
+            else:
+                print('is already anonc ch')
       
         for left_sys_ch_info in (ch for ch in anonc_sys_chs_info if ch not in sys_chs_cache):
             if not left_sys_ch_info:
@@ -179,7 +185,7 @@ class AnoncIntegrationGuild:
                 await channel.category.edit(name='anonc_system_channels')
                 await channel.category.set_permissions(guild.default_role, read_messages=False)
                 await channel.category.set_permissions(bot_owner, read_messages=True, send_messages=True)
-                await channel.category.set_permissions(anonc_admin, read_messages=True, send_messages=True)
+                await channel.category.set_permissions(anonc_moderator, read_messages=True, send_messages=True)
             else:
                 await channel.category.delete()
                 await channel.delete()
@@ -187,7 +193,6 @@ class AnoncIntegrationGuild:
         return guild
         
     async def cast_to_anonc_chat_channel(self, channel) -> Optional[AnoncChannel]:
-        print('-'*10)
         webhooks  = await channel.webhooks()
         for w in webhooks:
             if w.user == self.client.user and w.name.isdigit() and anonc_id_pat.fullmatch(channel.topic):
@@ -197,7 +202,10 @@ class AnoncIntegrationGuild:
                     if not anonc_id_role:
                         print('no matched role:', channel.topic)
                         continue
-                return AnoncChannel(channel, w, anonc_id_role=anonc_id_role)
+                try:
+                    return AnoncChannel(channel, w, anonc_id_role=anonc_id_role)
+                except ValueError:
+                    return None
         if not webhooks:
             print('no webhook',channel.name)
             
@@ -231,8 +239,8 @@ class AnoncIntegrationGuild:
     async def _create_anonc_chat_channel(self, guild, member) -> AnoncChannel:
         overwrites = {
             guild.default_role: PermissionOverwrite.from_pair(
-                    Permissions.none(), # allow
-                    Permissions.all() # deny
+                Permissions.none(), # allow
+                Permissions.all() # deny
                 ),
             member: PermissionOverwrite(
                     send_messages = True,

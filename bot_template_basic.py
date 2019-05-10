@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 
 token = os.environ['token']
 
-welcome_message_0 = '''
+welcome_message = '''
 {member.mention}
 WELCOME !!
 This is Anonymous Chat by nekojyarasi#9236
@@ -43,6 +43,7 @@ UserMimic = namedtuple('UserMimic', ('name', ))
 
 
 client = anonchat.AnoncBaseClient(
+    max_messages = 100,
     use_default_system_channel=True,
     anonc_system_channels_info=[
       {
@@ -163,7 +164,7 @@ async def on_direct_message(message: discord.Message) -> None:
     if message.author == client.user:
         return
     if message.author != client.bot_owner:
-        await send_to_bot_owner(f'__message from {message.author}__\n{message.content}')
+        await send_to_bot_owner(f'__message from {message.author}:{message.author.mention}__\n{message.content}')
     if message.content == 'close':
         await client.logout()
         client.loop.close()
@@ -213,13 +214,14 @@ async def on_message_at_general_channel(message: discord.Message) -> None:
     elif content == 'enable use_role option':
         await client.anonc_guild.enable_use_role()
         
+        
 @client.event
 async def on_anonc_member_guild_created(guild: discord.Guild) -> None:
     print('new guild created', guild)
     msg = await guild.system_channel.send('hello')
     invite = await msg.channel.create_invite()
     await send_to_bot_owner(f'registered new server : {invite.url}')
-    anonc_system_guild = client.anonc_system_guild
+    anonc_system_guild = client.anonc_guild.anonc_system_guild
     if anonc_system_guild:
         await anonc_system_guild.system_channel.send(f'registered new server : {invite.url}')
     elif guild.name.split('-')[-1] == '0':
@@ -228,7 +230,7 @@ async def on_anonc_member_guild_created(guild: discord.Guild) -> None:
         
 @client.event
 async def on_anonc_member_join(anonc_chat_channel: anonchat.channel.AnoncChannel) -> None:
-    message = await anonc_chat_channel.send(welcome_message_0.format(member=anonc_chat_channel.anonc_member))
+    message = await anonc_chat_channel.send(welcome_message.format(member=anonc_chat_channel.anonc_member))
     await message.pin()
     await update_presence()
     f = await make_history_html_file()
@@ -267,8 +269,19 @@ async def get_message_numbered(num: int) -> MessageMimic:
     msg = webhook_info_message_to_message_obj(message)
     if int(msg.author.name.split(':')[0]) == num:
         return msg
-    else:
-        raise ValueError(message.content)
+    logging.error(f'expect numbered-{num} but found\n```\n{message.author.name}\n{message.content}```')
+
+
+@client.event
+async def _is_message_for_chat(msg):
+    if not await anonchat.AnoncBaseClient._is_message_for_chat(client, msg):
+        return False
+        
+    if any(r.name=='Muted' for r in msg.author.roles)
+        print('muted' msg.author)
+        return False
+        
+    return True
     
     
 client.run(token)

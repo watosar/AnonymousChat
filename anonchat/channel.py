@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from aiohttp import request as aiohttp_request
-
+from asyncio import sleep
+from discord.utils import _parse_ratelimit_header
 
 class AnoncChannel:
     """
@@ -14,6 +15,8 @@ class AnoncChannel:
         self._core = channel
         self.anonc_webhook = anonc_webhook
         self.anonc_member = anonc_member or channel.guild.get_member(int(anonc_webhook.name))
+        if not self.anonc_member:
+            raise ValueError('no member found')
         top_role_name = self.anonc_member.top_role.name
         if top_role_name in ('bot owner', 'anonc moderator'):
             anonc_id = top_role_name.split()[1]
@@ -34,8 +37,34 @@ class AnoncChannel:
     
     async def anonc_send(self, anonc_message):
         headers = {'User-Agent': 'DiscordBot', 'Content-Type': 'application/json'}
-        async with aiohttp_request('POST', self.anonc_webhook.url, headers=headers, json=anonc_message.to_dict(self)) as session:
-            return
+        json = anonc_message.to_dict(self)
+        for tries in range(2):
+            async with aiohttp_request('POST', self.anonc_webhook.url, headers=headers, json=json) as r:             
+                # check if we have rate limit header information
+                remaining = r.headers.get('X-Ratelimit-Remaining')
+                if remaining == '0' and r.status != 429:
+                    delta = _parse_ratelimit_header(r)
+                    await sleep(delta)
+    
+                if 300 > r.status >= 200:
+                    return r
+    
+                # we are being rate limited
+                if r.status == 429:
+                    retry_after = data['retry_after'] / 1000.0
+                    await sleep(retry_after)
+                    continue
+    
+                if r.status in (500, 502):
+                    await sleep(1 + tries * 2)
+                    continue
+    
+                if r.status == 403:
+                    raise Forbidden(r, data)
+                elif r.status == 404:
+                    raise NotFound(r, data)
+                else:
+                    raise HTTPException(r, data)
     
     async def edit(self, **kwargs):
         if 'topic' in kwargs:

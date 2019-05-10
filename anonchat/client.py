@@ -150,7 +150,6 @@ class AnoncBaseClient(Client):
             return False
         if msg.type != MessageType.default:  # ignore system message like pinned
             return False
-            
         if self.anonc_guild.get_anonc_chat_channel_from_channel(msg.channel).anonc_member != msg.author:
             return False
 
@@ -163,8 +162,10 @@ class AnoncBaseClient(Client):
         pass
 
     async def anonc_send(self, anonc_msg) -> None:
-        coroutines = (anonc_channel.anonc_send(anonc_msg) for anonc_channel in self.anonc_guild.anonc_chat_channels)
-        await asyncio.wait([self.loop.create_task(coro) for coro in coroutines])
+        tasks = [self.loop.create_task(anonc_channel.anonc_send(anonc_msg)) for anonc_channel in self.anonc_guild.anonc_chat_channels]
+        done, _ = await asyncio.wait(tasks)
+        
+        
 
     @wait_until_anonc_ready
     async def on_member_join(self, member) -> None:
