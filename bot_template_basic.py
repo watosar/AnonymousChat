@@ -277,8 +277,8 @@ async def _is_message_for_chat(msg):
     if not await anonchat.AnoncBaseClient._is_message_for_chat(client, msg):
         return False
         
-    if any(r.name=='Muted' for r in msg.author.roles)
-        print('muted' msg.author)
+    if any(r.name=='Muted' for r in msg.author.roles):
+        print('muted', msg.author)
         return False
         
     return True
