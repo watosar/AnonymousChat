@@ -283,6 +283,7 @@ async def _is_message_for_chat(msg):
         
     return True
     
-    
-client.run(token)
-
+try:
+    client.run(token)
+except Exception as e:
+    logging.error(str(e))
