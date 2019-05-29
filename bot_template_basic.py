@@ -127,6 +127,7 @@ async def on_anonc_ready() -> None:
         if g == client.anonc_guild.anonc_system_guild and client.bot_owner not in g.members:
             invite = (await g.invites())[0]
             print(f'you should join here {invite}')
+    print('discord.py version is', discord.__version__)
     #print(f'guild base name is {client.anonc_guild.base_name}')
 
 
