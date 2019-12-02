@@ -19,23 +19,30 @@ token = os.environ['token']
 
 welcome_message = '''
 {member.mention}
-WELCOME !!
-This is Anonymous Chat by nekojyarasi#9236
-https://github.com/watosar/AnonymousChat
+Welcome to Anonymous Chat: [GitHub](https://github.com/watosar/AnonymousChat)
+5ch風チャットサーバーです
 
 
-・機能概要
-ユーザーが使用可能な機能は以下の2つです。
-①@ID 又は @番号 でそのメンバーにメンション
-②>>番号 でメッセージ引用
-有効なメンションでは ＠ 及び >> が送信時に絵文字に置き換えられます。
-これは可読性の向上を意図したもので、ユーザー側からこの絵文字を使用する事は出来ません。
+・機能概要説明
+メイン機能
+①ユーザー全員に個人専有チャンネルのみの割り当て
+②日替わり(AM 06:00更新)のIDを付与
+③メッセージをBotで転送
 
-ユーザーにはそれぞれ専用のチャンネルが割り当てられており、その内部ではメッセージがそのユーザーに対して調整されます。具体的には以下の3項目です。
-①ユーザー自身のメッセージの送信者アイコンにユーザーのものと同一のものを使用
-②ID を YOU として表示
-③@ID 又は @番号 によるメンションをそのユーザーへのものに変換
+ユーザーが使用可能な機能
+① @ID 又は @番号 による代替メンション
+② >>番号 でメッセージ引用
+有効なメンションでは ＠ 及び >> をカスタム絵文字に置換します
+これらの絵文字はメンションの成否表現にのみ使用され、ユーザーは使用出来ません
 
+専有チャンネル内部での特殊処理
+① チャンネルユーザー自身のメッセージの送信者アイコンをユーザーのものを使用
+② IDを YOU として表示
+③ 代替メンション対象の場合、正規のメンションへ置換
+
+
+・報告/提案/その他
+DM: {client.user.mention}, {client.bot_owner.memtion}
 '''
 
 MessageMimic = namedtuple('MessageMimic', ('content', 'author', 'created_at'))
@@ -231,7 +238,7 @@ async def on_anonc_member_guild_created(guild: discord.Guild) -> None:
         
 @client.event
 async def on_anonc_member_join(anonc_chat_channel: anonchat.channel.AnoncChannel) -> None:
-    message = await anonc_chat_channel.send(welcome_message.format(member=anonc_chat_channel.anonc_member))
+    message = await anonc_chat_channel.send(welcome_message.format(member=anonc_chat_channel.anonc_member, client=client))
     await message.pin()
     await update_presence()
     f = await make_history_html_file()
