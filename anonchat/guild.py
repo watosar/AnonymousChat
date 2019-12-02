@@ -178,7 +178,8 @@ class AnoncIntegrationGuild:
                 await guild.create_custom_emoji(name=name,image=f.read(),roles=[anonc_system])
         # TODO : なんか動かない。
         guild = next((g for g in self.client.guilds if g==guild))
-        for channel in guild.channels:
+        channels = await guild.fetch_channels()
+        for channel in channels:
             if isinstance(channel,(CategoryChannel,)):
                 continue
             elif isinstance(channel,(TextChannel,)):
