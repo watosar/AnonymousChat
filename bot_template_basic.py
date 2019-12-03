@@ -42,7 +42,7 @@ Welcome to Anonymous Chat: [GitHub](https://github.com/watosar/AnonymousChat)
 
 
 ・報告/提案/その他
-DM: {client.user.mention}, {client.bot_owner.memtion}
+DM: {client.user.mention}, {client.bot_owner.mention}
 '''
 
 MessageMimic = namedtuple('MessageMimic', ('content', 'author', 'created_at'))
