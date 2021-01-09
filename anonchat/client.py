@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
-from discord import Client, Guild, DMChannel, Message, MessageType, AuditLogAction
+from discord import Client, Guild, DMChannel, Message, MessageType, AuditLogAction, Intents
 from .guild import AnoncIntegrationGuild
 from .message import AnoncMessageMaker
 import typing
@@ -30,7 +30,7 @@ class AnoncBaseClient(Client):
     anonc_count = AnoncCount()
     
     def __init__(
-      self, *args, anchor_emoji_path=None, at_sign_emoji_path=None, use_default_system_channel=False, anonc_system_channels_info =[{}], nsfw=False, anchorable_limit=None, use_role=True, show_chat_id=True, anonc_default_name='John Doe', guild_base_name='', **kwargs):
+      self, *args, anchor_emoji_path=None, at_sign_emoji_path=None, use_default_system_channel=False, anonc_system_channels_info =[{}], nsfw=False, anchorable_limit=None, use_role=True, show_chat_id=True, anonc_default_name='John Doe', guild_base_name='', intents=Intents.all(), **kwargs):
         super().__init__(*args, **kwargs)
 
         # TODO : add this
