@@ -30,8 +30,8 @@ class AnoncBaseClient(Client):
     anonc_count = AnoncCount()
     
     def __init__(
-      self, *args, anchor_emoji_path=None, at_sign_emoji_path=None, use_default_system_channel=False, anonc_system_channels_info =[{}], nsfw=False, anchorable_limit=None, use_role=True, show_chat_id=True, anonc_default_name='John Doe', guild_base_name='', intents=Intents.all(), **kwargs):
-        super().__init__(*args, **kwargs)
+      self, *args, anchor_emoji_path=None, at_sign_emoji_path=None, use_default_system_channel=False, anonc_system_channels_info =[{}], nsfw=False, anchorable_limit=None, use_role=True, show_chat_id=True, anonc_default_name='John Doe', guild_base_name='', **kwargs):
+        super().__init__(*args, intents=Intents.all(), **kwargs)
 
         # TODO : add this
         #   self.number_of_channel_stock = 0
