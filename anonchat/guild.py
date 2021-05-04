@@ -216,7 +216,7 @@ class AnoncIntegrationGuild:
                     anoncch = AnoncChannel(channel, w, anonc_id_role=anonc_id_role)
                     if self.use_role and anonc_id_role is None:
                         anonc_id_role = await channel.guild.create_role(name=channel.topic)
-                        ch.anonc_id_role = anonc_id_role
+                        anoncch.anonc_id_role = anonc_id_role
                     return anoncch
                 except ValueError:
                     return None
