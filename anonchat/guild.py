@@ -80,6 +80,7 @@ class AnoncIntegrationGuild:
             print('use_role cannot be True\nToggle flg to False')
             await self.disable_use_role()
       
+        anonc_role_set = set()
         for ch in self.client.get_all_channels():
             print('-'*10)
             print(ch)
@@ -97,10 +98,19 @@ class AnoncIntegrationGuild:
                 if anon_ch:
                     self.anonc_chat_channels.append(anon_ch)
                     print('is anonc ch')
+                    anonc_role_set.add(anon_ch.anonc_id_role.id)
                 else:
                     print('pass')
             else:
                 print('is already anonc ch')
+        if self.use_role:
+            for g in self.anonc_chat_guilds:
+                for role in g.roles:
+                    if role.id in anonc_role_set: continue
+                    try:
+                        await role.edit(colour=0xff0000)
+                    except e:
+                        pass
       
         for left_sys_ch_info in (ch for ch in anonc_sys_chs_info if ch not in sys_chs_cache):
             if not left_sys_ch_info:
@@ -202,9 +212,12 @@ class AnoncIntegrationGuild:
                     anonc_id_role = next((r for r in channel.guild.roles if r.name==channel.topic),None)# or await channel.guild.create_role(name=channel.topic)
                     if not anonc_id_role:
                         print('no matched role:', channel.topic)
-                        continue
                 try:
-                    return AnoncChannel(channel, w, anonc_id_role=anonc_id_role)
+                    anoncch = AnoncChannel(channel, w, anonc_id_role=anonc_id_role)
+                    if self.use_role and anonc_id_role is None:
+                        anonc_id_role = await channel.guild.create_role(name=channel.topic)
+                        ch.anonc_id_role = anonc_id_role
+                    return anoncch
                 except ValueError:
                     return None
         if not webhooks:
